@@ -22,23 +22,23 @@ class VidioSpiderXPath(scrapy.Spider):
                 'job_location': selector.css('.b-job__location::text').get(),
                 'job_department': selector.css('.b-job__department::text').get(),
                 'job_url': self.base_url+selector.css('a::attr(href)').get(),
-                'first_seen': self.timestamp # timestamp job added
+                'first_seen': self.timestamp, # timestamp job added
 
                 # Add job metadata
-                # 'base_salary': # salary of job
-                # 'job_type': # type of job, full-time, part-time, intern, remote
-                # 'job_level': # level of job, entry, mid, senior
-                # 'job_apply_end_date': # end date of job
-                # 'last_seen': # timestamp job last seen
-                # 'is_active': # job is still active, True or False
+                'base_salary': 'N/A', # salary of job
+                'job_type': 'N/A', # type of job, full-time, part-time, intern, remote
+                'job_level': 'N/A', # level of job, entry, mid, senior
+                'job_apply_end_date': 'N/A', # end date of job
+                'last_seen': '', # timestamp job last seen
+                'is_active': 'True', # job is still active, True or False
 
                 # Add company metadata
-                # 'company': # company name
-                # 'company_url': # company url
+                'company': 'Vidio', # company name
+                'company_url': self.base_url, # company url
 
                 # Add job board metadata
-                # 'job_board': # name of job board
-                # 'job_board_url': # url of job board
+                'job_board': 'N/A', # name of job board
+                'job_board_url': 'N/A' # url of job board
 
             }
 
