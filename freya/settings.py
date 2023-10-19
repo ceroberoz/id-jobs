@@ -88,7 +88,7 @@ ROBOTSTXT_OBEY = True
 #HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 
 # Set default browser to Firefox / Webkit (default chromium)
-PLAYWRIGHT_BROWSER_TYPE = "firefox"
+# PLAYWRIGHT_BROWSER_TYPE = "Firefox"
 
 # Enable Playwright download handlers
 DOWNLOAD_HANDLERS = {
