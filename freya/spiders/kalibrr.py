@@ -13,38 +13,53 @@ class KalibrrSpiderJson(scrapy.Spider):
     timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
 
     def start_requests(self):
-        # GET request
-        yield scrapy.Request(self.base_url, meta={"playwright": True})
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        # GET request, remove Playwright as it cause breaking in JSON parsing
+        yield scrapy.Request(self.base_url, headers=headers)
 
     def parse(self, response):
-        selector = json.loads(response.body_as_unicode())
-        for selector in response.xpath('//div[contains(@class, "b-job")]/a'):
-            yield {
-                'job_title': selector.css('.b-job__name::text').get(),
-                'job_location': selector.css('.b-job__location::text').get(),
-                'job_department': selector.css('.b-job__department::text').get(),
-                'job_url': self.base_url+selector.css('a::attr(href)').get(),
-                'first_seen': self.timestamp, # timestamp job added
+        try:
+            data = json.loads(response.text)
+            jobs = data['jobs']
 
-                # Add job metadata
-                'base_salary': 'N/A', # salary of job
-                'job_type': 'N/A', # type of job, full-time, part-time, intern, remote
-                'job_level': 'N/A', # level of job, entry, mid, senior
-                'job_apply_end_date': 'N/A', # end date of job
-                'last_seen': '', # timestamp job last seen
-                'is_active': 'True', # job is still active, True or False
+            for selector in jobs:
+                # sanitise string from selector['name'] to remove "," in results
+                original_job_title = selector['name']
+                self.sanitize_job_title = original_job_title.replace(", ", " - ")
 
-                # Add company metadata
-                'company': 'Vidio', # company name
-                'company_url': self.base_url, # company url
+                yield {
+                    'job_title': self.sanitize_job_title,
+                    'job_location': selector['google_location']['address_components']['city'],
+                    'job_department': 'N/A',
+                    'job_url': f"https://www.kalibrr.com/c/{selector['company_info']['code']}/jobs/{selector['id']}",
+                    'first_seen': self.timestamp, # timestamp job added
 
-                # Add job board metadata
-                'job_board': 'N/A', # name of job board
-                'job_board_url': 'N/A' # url of job board
+                    # # Add job metadata
+                    'base_salary': selector['base_salary'], # salary of job
+                    'job_type': selector['tenure'], # type of job, full-time, part-time, intern, remote
+                    'job_level': 'N/A', # level of job, entry, mid, senior
+                    'job_apply_end_date': selector['application_end_date'], # end date of job
+                    'last_seen': '', # timestamp job last seen
+                    'is_active': 'True', # job is still active, True or False
 
-            }
+                    # Add company metadata
+                    'company': selector['company_info']['company_name'], # company name
+                    'company_url': f"https://www.kalibrr.com/id-ID/c/{selector['company_info']['code']}/jobs", #company url
+
+                    # Add job board metadata
+                    'job_board': 'Kalibrr', # name of job board
+                    'job_board_url': 'https://www.kalibrr.com/id-ID/home' # url of job board
+                }
+
+        except json.JSONDecodeError as e:
+            # Handle JSON decoding errors
+            self.logger.error(f"Error decoding JSON: {e}")
+            self.logger.debug(f"Response content: {response.text}")
 
         # Go to next page, if applicable
-        # next_page_url = response.xpath('//li[@class="next"]/a/@href').extract_first()
-        # if next_page_url is not None:
-        #     yield scrapy.Request(response.urljoin(next_page_url))
+            # next_page_url = response.xpath('//li[@class="next"]/a/@href').extract_first()
+            # if next_page_url is not None:
+            #     yield scrapy.Request(response.urljoin(next_page_url))
