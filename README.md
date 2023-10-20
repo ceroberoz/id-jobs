@@ -1,32 +1,32 @@
 # id-jobs
 Indonesia job information, hand picked from trusted sources.
-Explore Bare Lazy Minimum Product in Google Sheets format! 
+Explore the coolest **Bare Lazy Minimum Product** in Google Sheets format! 
 
 https://s.id/id-jobs
 
 # Job source list:
-**company
-- [X] Vidio
-- [ ] Gojek
-- [ ] Tokopedia
-- [ ] Blibli
-- [ ] Evermos
+- **company**
+	- [X] Vidio
+	- [ ] Gojek
+	- [ ] Tokopedia
+	- [ ] Blibli
+	- [ ] Evermos
 
-**job-portal
-- [X] Kalibrr
-- [ ] JobsDB
-- [ ] Glints
-- [X] Dealls
-- [ ] Jobstreet
+- **job-portal**
+	- [X] Kalibrr
+	- [ ] JobsDB
+	- [ ] Glints
+	- [X] Dealls
+	- [ ] Jobstreet
 
 # data-enrichment
-- Event
+- **Event**
 	- [ ] Dicoding
 	- [ ] Binar Academy
-- About company
+- **About company**
 	- [ ] LinkedIn
 	- [ ] Crunchbase
-- News / rumor mills
+- **News / rumor mills**
 	-  [ ] Dailymotion
 	-  [ ] e27
 	-  [ ] DealStreetAsia
