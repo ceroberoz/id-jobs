@@ -50,12 +50,21 @@ class EvermosSpiderJson(scrapy.Spider):
             city = branch['city']
             branch_lookup[branch_id] = city
 
+        # Get list of job roles
+        job_roles_data = data['job_roles']
+        # Create a Python object based on the response for job roles
+        job_roles_lookup = {}
+        for job_role in job_roles_data:
+            job_role_id = job_role['id']
+            job_role_name = job_role['name']
+            job_roles_lookup[job_role_id] = job_role_name
+
         try:
             ## Data source
-            jobs = data['jobs']
+            jobs_data = data['jobs']
 
             # for selector in jobs:
-            for selector in jobs:
+            for selector in jobs_data:
                 # sanitise string from selector['title'] to remove "," in results
                 original_job_title = selector['title']
                 self.sanitize_job_title = original_job_title.replace(", ", " - ")
@@ -63,28 +72,40 @@ class EvermosSpiderJson(scrapy.Spider):
                 # Get the city name using the branch id from lookup dictionary
                 self.sanitize_job_location = branch_lookup[selector['branch_id']]
 
+                # Get the job role name using the job role id from lookup dictionary
+                self.sanitize_job_role = job_roles_lookup[selector['job_role_id']]
+
+                # Validate job type value, if 1 return Contract, 2 return Full Time, 3 return Intern
+                sanitize_job_type = selector['job_type']
+                if sanitize_job_type == 1:
+                    self.sanitize_job_type = "Contract"
+                elif sanitize_job_type == 2:
+                    self.sanitize_job_type = "Full Time"
+                elif sanitize_job_type == 3:
+                    self.sanitize_job_type = "Intern"
+
                 yield {
                     'job_title': self.sanitize_job_title,
-                    'job_location': self.sanitize_job_location
-                    # 'job_department': 'N/A',
-                    # 'job_url': f"https://www.kalibrr.com/c/{selector['company_info']['code']}/jobs/{selector['id']}",
-                    # 'first_seen': self.timestamp, # timestamp job added
+                    'job_location': self.sanitize_job_location,
+                    'job_department': self.sanitize_job_role,
+                    'job_url': selector['url'],
+                    'first_seen': self.timestamp, # timestamp job added
 
-                    # # Add job metadata
-                    # 'base_salary': selector['base_salary'], # salary of job
-                    # 'job_type': selector['tenure'], # type of job, full-time, part-time, intern, remote
-                    # 'job_level': 'N/A', # level of job, entry, mid, senior
-                    # 'job_apply_end_date': selector['application_end_date'], # end date of job
-                    # 'last_seen': '', # timestamp job last seen
-                    # 'is_active': 'True', # job is still active, True or False
+                    # Add job metadata
+                    'base_salary': '', # salary of job
+                    'job_type': self.sanitize_job_type, # type of job, full-time, part-time, intern, remote
+                    'job_level': selector['position_level'], # level of job, entry, mid, senior
+                    'job_apply_end_date': selector['closing_date'], # end date of job
+                    'last_seen': '', # timestamp job last seen
+                    'is_active': 'True', # job is still active, True or False
 
-                    # # Add company metadata
-                    # 'company': selector['company_info']['company_name'], # company name
-                    # 'company_url': f"https://www.kalibrr.com/id-ID/c/{selector['company_info']['code']}/jobs", #company url
+                    # Add company metadata
+                    'company': 'Evermos', # company name
+                    'company_url': 'https://evermos.com/', #company url
 
-                    # # Add job board metadata
-                    # 'job_board': 'Kalibrr', # name of job board
-                    # 'job_board_url': 'https://www.kalibrr.com/id-ID/home' # url of job board
+                    # Add job board metadata
+                    'job_board': 'N/A', # name of job board
+                    'job_board_url': 'N/A' # url of job board
                 }
 
         except json.JSONDecodeError as e:
