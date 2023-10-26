@@ -17,6 +17,7 @@ Made with Python and Scrapy with Codeium.
 	- [ ] Tokopedia
 	- [ ] Blibli
 	- [X] Evermos
+	- [X] SehatQ
 
 - **job-portal**
 	- [X] Kalibrr
@@ -40,8 +41,11 @@ Made with Python and Scrapy with Codeium.
 
 # How to run
 1. Clone this repository
-2. Create venv
+2. Create venv ```python3 -m venv venv```
 3. Run the script
-	a. Run the script ```pip install -r requirements.txt```
-	b. Run the script ```pylawright install```
-4. Run scrapy
+-Run the script ```pip install -r requirements.txt```
+-Run the script ```playwright install```
+4. Run ```scrapy crawl crawler-name```
+
+More information about Scrapy: https://docs.scrapy.org/en/latest/intro/overview.html
+More information about Scrapy Playwright: https://playwright.dev/docs/intro
