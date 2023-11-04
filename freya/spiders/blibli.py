@@ -25,27 +25,36 @@ class BlibliSpiderJson(scrapy.Spider):
 
             for selector in jobs:
 
-                for jobs in selector['jobs']:
+                for job in selector['jobs']:
 
                     # Create URL with format https://careers.blibli.com/job-detail/junior-engineer-officer?job=f1f4505d-27ef-469e-a9d5-de6d6e199aee
-                    url_path_job_title = jobs['title'].lower().replace(' ', '-')
-                    url_path_job_id = jobs['id']
+                    url_path_job_title = job['title'].lower().replace(' ', '-')
+                    url_path_job_id = job['id']
 
-                    # Merge url_path_job_title and url_path_job_id to url format https://carees.blibli.com/job-detail/{url_path_job_title}?job={url_path_job_id}
-                    url = f"https://carees.blibli.com/job-detail/{url_path_job_title}?job={url_path_job_id}"
+                    # Merge url_path_job_title and url_path_job_id to url format https://careers.blibli.com/job-detail/{url_path_job_title}?job={url_path_job_id}
+                    url = f"https://careers.blibli.com/job-detail/{url_path_job_title}?job={url_path_job_id}"
+
+                    # Check if job['employmentType'] is exists
+                    employment_type = job['employmentType'].replace("Ph-", "").replace("-", " ").capitalize() if 'employmentType' in job else 'N/A'
+
+                    # Check if job['experience'] is exists
+                    experience = job['experience'] if 'experience' in job else 'N/A'
+
+                    # Check if job['location'] is exists
+                    location = job['location'] if 'location' in job else 'N/A'
 
                     yield {
-                        'job_title': jobs['title'],
-                        'job_location': jobs['location'],
-                        'job_department': jobs['departmentName'],
+                        'job_title': job['title'],
+                        'job_location': location,
+                        'job_department': job['departmentName'],
                         'job_url': url ,
                         'first_seen': self.timestamp, # timestamp job added
 
                         # Add job metadata
                         'base_salary': 'N/A', # salary of job
-                        'job_type': jobs['employmentType'], # type of job, full-time, part-time, intern, remote
-                        'job_level': jobs['experience'], # level of job, entry, mid, senior
-                        'job_apply_end_date': 'n?A', # end date of job
+                        'job_type': employment_type, # type of job, full-time, part-time, intern, remote
+                        'job_level': experience, # level of job, entry, mid, senior
+                        'job_apply_end_date': 'N/A', # end date of job
                         'last_seen': '', # timestamp job last seen
                         'is_active': 'True', # job is still active, True or False
 
