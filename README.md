@@ -13,9 +13,12 @@ Made with Python and Scrapy with Codeium.
 # Job source list:
 - **company**
 	- [X] Vidio
-	- [ ] Gojek
+	- [ ] Gojek / Goto group / Tokopedia
+	- [ ] Grab
 	- [ ] Tokopedia
-	- [ ] Blibli
+	- [ ] Bukalapak
+	- [ ] Shopee
+	- [X] Blibli
 	- [X] Evermos
 	- [X] SehatQ
 
@@ -43,9 +46,10 @@ Made with Python and Scrapy with Codeium.
 1. Clone this repository
 2. Create venv ```python3 -m venv venv```
 3. Run the script
--Run the script ```pip install -r requirements.txt```
--Run the script ```playwright install```
+	- Run the script ```pip install -r requirements.txt```
+	- Run the script ```playwright install```
 4. Run ```scrapy crawl crawler-name```
 
 More information about Scrapy: https://docs.scrapy.org/en/latest/intro/overview.html
+
 More information about Scrapy Playwright: https://playwright.dev/docs/intro
