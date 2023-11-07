@@ -49,29 +49,35 @@ class GotoSpiderJson(scrapy.Spider):
             # for selector in jobs:
             for selector in jobs_data:
 
-                yield {
-                    'job_title': selector['job_list']['text'],
-                    # 'job_location': self.sanitize_job_location,
-                    # 'job_department': selector['job_list']['categories']
-                    # 'job_url': selector['url'],
-                    # 'first_seen': self.timestamp, # timestamp job added
+                # add foreach for each selector['job_list']
+                job_list = selector['job_list']
+                for selector in job_list:
 
-                    # # Add job metadata
-                    # 'base_salary': '', # salary of job
-                    # 'job_type': self.sanitize_job_type, # type of job, full-time, part-time, intern, remote
-                    # 'job_level': selector['position_level'], # level of job, entry, mid, senior
-                    # 'job_apply_end_date': selector['closing_date'], # end date of job
-                    # 'last_seen': '', # timestamp job last seen
-                    # 'is_active': 'True', # job is still active, True or False
+                    yield {
+                        # Add job metadata
+                            'job_title': selector['text'].replace(',', '-'),
+                            'job_location': selector['categories']['location'],
+                            'job_department': selector['categories']['department'],
+                            'job_url': selector['urls']['show'],
+                            'first_seen': self.timestamp, # timestamp job added
 
-                    # # Add company metadata
-                    # 'company': 'Evermos', # company name
-                    # 'company_url': 'https://evermos.com/', #company url
+                            # Add job metadata
+                            'base_salary': '', # salary of job
+                            'job_type': selector['categories']['commitment'], # type of job, full-time, part-time, intern, remote
+                            'job_level': '', # level of job, entry, mid, senior
+                            'job_apply_end_date': '', # end date of job
+                            'last_seen': '', # timestamp job last seen
+                            'is_active': 'True', # job is still active, True or False
 
-                    # # Add job board metadata
-                    # 'job_board': 'N/A', # name of job board
-                    # 'job_board_url': 'N/A' # url of job board
-                }
+                            # Add company metadata
+                            'company': 'GoTo', # company name
+                            'company_url': 'https://www.gotocompany.com/careers', #company url
+
+                            # Add job board metadata
+                            'job_board': 'N/A', # name of job board
+                            'job_board_url': 'N/A' # url of job board
+                        }
+
 
         except json.JSONDecodeError as e:
             # Handle JSON decoding errors
