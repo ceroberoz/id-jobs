@@ -13,9 +13,8 @@ Made with Python and Scrapy with Codeium.
 # Job source list:
 - **company**
 	- [X] Vidio
-	- [ ] Gojek / Goto group / Tokopedia
+	- [X] Goto group
 	- [ ] Grab
-	- [ ] Tokopedia
 	- [ ] Bukalapak
 	- [ ] Shopee
 	- [X] Blibli
