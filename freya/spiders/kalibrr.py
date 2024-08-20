@@ -6,7 +6,7 @@ from datetime import datetime
 
 class KalibrrSpiderJson(scrapy.Spider):
     name = 'kalibrr-json'
-    base_url = 'https://www.kalibrr.com/kjs/job_board/featured_jobs?limit=1000&offset=1&country=Indonesia'
+    base_url = 'https://www.kalibrr.com/kjs/job_board/search?limit=2000&offset=0'
 
     # Get timestamp in human readable format
     now = datetime.now()
@@ -37,7 +37,7 @@ class KalibrrSpiderJson(scrapy.Spider):
                     'job_url': f"https://www.kalibrr.com/c/{selector['company_info']['code']}/jobs/{selector['id']}",
                     'first_seen': self.timestamp, # timestamp job added
 
-                    # Add job metadata
+                    ## Add job metadata
                     'base_salary': selector['base_salary'], # salary of job
                     'job_type': selector['tenure'], # type of job, full-time, part-time, intern, remote
                     'job_level': 'N/A', # level of job, entry, mid, senior
@@ -46,7 +46,7 @@ class KalibrrSpiderJson(scrapy.Spider):
                     'is_active': 'True', # job is still active, True or False
 
                     # Add company metadata
-                    'company': selector['company_info']['company_name'], # company name
+                    'company': selector['company_name'], # company name
                     'company_url': f"https://www.kalibrr.com/id-ID/c/{selector['company_info']['code']}/jobs", #company url
 
                     # Add job board metadata
@@ -59,7 +59,8 @@ class KalibrrSpiderJson(scrapy.Spider):
             self.logger.error(f"Error decoding JSON: {e}")
             self.logger.debug(f"Response content: {response.text}")
 
-        # # Go to next page, if applicable
-        # next_page_url = response.xpath('//li[@class="next"]/a/@href').extract_first()
-        # if next_page_url is not None:
-        #     yield scrapy.Request(response.urljoin(next_page_url))
+        # Go to next page, if applicable
+            # next_page_url = response.xpath('//li[@class="next"]/a/@href').extract_first()
+            # if next_page_url is not None:
+            #     yield scrapy.Request(response.urljoin(next_page_url))
+
