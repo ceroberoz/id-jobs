@@ -6,7 +6,7 @@ from datetime import datetime
 
 class KalibrrSpiderJson(scrapy.Spider):
     name = 'kalibrr-json'
-    base_url = 'https://www.kalibrr.com/kjs/job_board/featured_jobs?limit=1000&offset=1&country=Indonesia'
+    base_url = 'https://www.kalibrr.com/kjs/job_board/search?limit=2000&offset=0'
 
     # Get timestamp in human readable format
     now = datetime.now()
@@ -46,7 +46,7 @@ class KalibrrSpiderJson(scrapy.Spider):
                     'is_active': 'True', # job is still active, True or False
 
                     # Add company metadata
-                    'company': selector['company_info']['company_name'], # company name
+                    'company': selector['company_name'], # company name
                     'company_url': f"https://www.kalibrr.com/id-ID/c/{selector['company_info']['code']}/jobs", #company url
 
                     # Add job board metadata
