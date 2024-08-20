@@ -13,7 +13,7 @@ Made with Python and Scrapy with Codeium.
 # Job source list:
 - **company**
 	- [X] Vidio
-	- [X] Goto group
+	- [X] GoTo Group
 	- [ ] Grab
 	- [ ] Bukalapak
 	- [ ] Shopee
