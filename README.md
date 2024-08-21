@@ -1,7 +1,7 @@
 # id-jobs
 Indonesia job information, hand picked from trusted sources.
 
-Explore the coolest **Bare Lazy Minimum Product** in Google Sheets format! 
+Explore the coolest **Bare Lazy Minimum Product** in Google Sheets format!
 
 https://s.id/id-jobs
 
@@ -26,7 +26,7 @@ Made with Python and Scrapy with Codeium.
 	- [ ] JobsDB
 	- [ ] Glints
 	- [X] Dealls
-	- [ ] Jobstreet
+	- [X] Jobstreet
 
 # data-enrichment
 - **Event**
