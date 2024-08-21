@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class EvermosSpiderJson(scrapy.Spider):
-    name = 'evermos-json'
+    name = 'evermos'
     base_url = 'https://evermos-talent.freshteam.com/hire/widgets/jobs.json'
 
     # Get timestamp in human readable format
@@ -14,7 +14,7 @@ class EvermosSpiderJson(scrapy.Spider):
 
     # override ROBOTSTXT_OBEY = False
     custom_settings = {
-        'ROBOTSTXT_OBEY': False   
+        'ROBOTSTXT_OBEY': False
     }
 
     def start_requests(self):

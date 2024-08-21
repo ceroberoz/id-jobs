@@ -1,0 +1,132 @@
+# -*- coding: utf-8 -*-
+from typing_extensions import Optional
+import scrapy
+import json
+from datetime import datetime
+import random
+import urllib.parse
+import time
+import uuid
+from scrapy.utils.project import get_project_settings
+
+def clean_string(text):
+    if not isinstance(text, str):
+        return text
+    return text.replace('-', ' ').replace('=', ' ').replace(';', ' ').replace(',', ' ').replace('\n', ' ').strip()
+
+def generate_random_id():
+    return str(uuid.uuid4())
+
+def generate_random_query_id():
+    return f"{uuid.uuid4().hex}-{random.randint(1000000, 9999999)}"
+
+class JobstreetSpider(scrapy.Spider):
+    name = 'jobstreet'
+    base_url = 'https://id.jobstreet.com/api/chalice-search/v4/search'
+
+    def __init__(self, *args, **kwargs):
+        super(JobstreetSpider, self).__init__(*args, **kwargs)
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
+        ]
+        self.settings = get_project_settings()
+
+    def start_requests(self):
+        concurrent_requests = self.settings.getint('CONCURRENT_REQUESTS', 16)
+        download_delay = self.settings.getfloat('DOWNLOAD_DELAY', 0.25)
+
+        for page in range(1, 1001):  # Crawl up to page 1000
+            user_id = generate_random_id()
+            params = {
+                'siteKey': 'ID-Main',
+                'sourcesystem': 'houston',
+                'userqueryid': generate_random_query_id(),
+                'userid': user_id,
+                'usersessionid': user_id,
+                'eventCaptureSessionId': user_id,
+                'page': str(page),
+                'seekSelectAllPages': 'true',
+                'sortmode': 'ListedDate',
+                'pageSize': '30',
+                'include': 'seodata',
+                'locale': 'id-ID',
+                'solId': generate_random_id()
+            }
+
+            headers = self.get_headers()
+
+            yield scrapy.Request(
+                url=f"{self.base_url}?{urllib.parse.urlencode(params)}",
+                headers=headers,
+                callback=self.parse,
+                meta={'download_delay': download_delay}
+            )
+
+    def get_headers(self):
+        return {
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'no-cache',
+            'dnt': '1',
+            'pragma': 'no-cache',
+            'priority': 'u=1, i',
+            'referer': 'https://id.jobstreet.com/id/jobs?sortmode=ListedDate',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'sec-gpc': '1',
+            'seek-request-brand': 'jobstreet',
+            'seek-request-country': 'ID',
+            'user-agent': random.choice(self.user_agents),
+            'x-forwarded-for': f'1.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}',
+            'x-seek-checksum': '129cf744',
+            'x-seek-site': 'Chalice'
+        }
+
+    def parse(self, response):
+        try:
+            data = json.loads(response.text)
+            jobs = data.get('data', [])
+
+            for job in jobs:
+                yield self.parse_job(job)
+
+            # Add a random delay between requests
+            time.sleep(response.meta['download_delay'] + random.uniform(0.5, 1.5))
+
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Error decoding JSON: {e}")
+        except Exception as e:
+            self.logger.error(f"Unexpected error: {e}")
+
+    def parse_job(self, job):
+        return {
+            'job_title': clean_string(job.get('title', '')),
+            'job_location': clean_string(job.get('jobLocation', {}).get('label', '')),
+            'job_department': clean_string(f"{job.get('classification', {}).get('description', '')}-{job.get('subClassification', {}).get('description', '')}"),
+            'job_url': f"https://id.jobstreet.com/job/{job.get('id', '')}",
+            'first_seen': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            'base_salary': clean_string(job.get('salary', 'N/A')),
+            'job_type': clean_string(job.get('workType', 'N/A')),
+            'job_level': 'N/A',
+            'job_apply_end_date': clean_string(job.get('listingDate', 'N/A')),
+            'last_seen': '',
+            'is_active': 'True',
+            'company': clean_string(job.get('companyName', '')),
+            'company_url': '',
+            'job_board': 'Jobstreet',
+            'job_board_url': 'https://id.jobstreet.com/'
+
+            # Optional
+            # 'job_description': clean_string(job.get('teaser', '')),
+            # 'advertiser_id': clean_string(job.get('advertiser', {}).get('id', '')),
+            # 'job_id': clean_string(job.get('id', '')),
+            # 'list_date': clean_string(job.get('listingDateDisplay', '')),
+            # 'work_arrangements': clean_string(', '.join([arr.get('label', '') for arr in job.get('workArrangements', {}).get('data', [])])),
+            # 'is_premium': job.get('isPremium', False),
+            # 'is_stand_out': job.get('isStandOut', False),
+        }
