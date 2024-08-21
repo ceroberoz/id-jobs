@@ -2,9 +2,9 @@ name: Run Scrapy Spiders
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
   schedule:
     - cron: "0 0 * * *" # Run daily at midnight UTC
 
@@ -23,7 +23,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install scrapy
+          playwright install
 
       - name: Run scraping script
         run: |
