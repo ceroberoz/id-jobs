@@ -3,64 +3,48 @@ import scrapy
 import json
 from datetime import datetime
 
-
 class KalibrrSpiderJson(scrapy.Spider):
     name = 'kalibrr-json'
-    base_url = 'https://www.kalibrr.com/kjs/job_board/search?limit=2000&offset=0'
-
-    # Get timestamp in human readable format
-    now = datetime.now()
-    timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
+    base_url = 'https://www.kalibrr.com/kjs/job_board/search?limit=2000&offset={}'
 
     def start_requests(self):
-        headers = {
-            'Content-Type': 'application/json'
-        }
-
-        # GET request, remove Playwright as it cause breaking in JSON parsing
-        yield scrapy.Request(self.base_url, headers=headers)
+        yield scrapy.Request(self.base_url.format(0), headers={'Content-Type': 'application/json'})
 
     def parse(self, response):
         try:
             data = json.loads(response.text)
-            jobs = data['jobs']
+            jobs = data.get('jobs', [])
 
-            for selector in jobs:
-                # sanitise string from selector['name'] to remove "," in results
-                original_job_title = selector['name']
-                self.sanitize_job_title = original_job_title.replace(", ", " - ")
+            for job in jobs:
+                yield self.parse_job(job)
 
-                yield {
-                    'job_title': self.sanitize_job_title,
-                    'job_location': selector['google_location']['address_components']['city'],
-                    'job_department': 'N/A',
-                    'job_url': f"https://www.kalibrr.com/c/{selector['company_info']['code']}/jobs/{selector['id']}",
-                    'first_seen': self.timestamp, # timestamp job added
-
-                    ## Add job metadata
-                    'base_salary': selector['base_salary'], # salary of job
-                    'job_type': selector['tenure'], # type of job, full-time, part-time, intern, remote
-                    'job_level': 'N/A', # level of job, entry, mid, senior
-                    'job_apply_end_date': selector['application_end_date'], # end date of job
-                    'last_seen': '', # timestamp job last seen
-                    'is_active': 'True', # job is still active, True or False
-
-                    # Add company metadata
-                    'company': selector['company_name'], # company name
-                    'company_url': f"https://www.kalibrr.com/id-ID/c/{selector['company_info']['code']}/jobs", #company url
-
-                    # Add job board metadata
-                    'job_board': 'Kalibrr', # name of job board
-                    'job_board_url': 'https://www.kalibrr.com/id-ID/home' # url of job board
-                }
+            # Implement pagination
+            total_jobs = data.get('total', 0)
+            current_offset = data.get('offset', 0)
+            if current_offset + len(jobs) < total_jobs:
+                next_offset = current_offset + len(jobs)
+                yield scrapy.Request(self.base_url.format(next_offset), callback=self.parse)
 
         except json.JSONDecodeError as e:
-            # Handle JSON decoding errors
             self.logger.error(f"Error decoding JSON: {e}")
-            self.logger.debug(f"Response content: {response.text}")
+        except Exception as e:
+            self.logger.error(f"Unexpected error: {e}")
 
-        # Go to next page, if applicable
-            # next_page_url = response.xpath('//li[@class="next"]/a/@href').extract_first()
-            # if next_page_url is not None:
-            #     yield scrapy.Request(response.urljoin(next_page_url))
-
+    def parse_job(self, job):
+        return {
+            'job_title': job.get('name', '').replace(", ", " - "),
+            'job_location': job.get('google_location', {}).get('address_components', {}).get('city', 'N/A'),
+            'job_department': 'N/A',
+            'job_url': f"https://www.kalibrr.com/c/{job.get('company_info', {}).get('code', '')}/jobs/{job.get('id', '')}",
+            'first_seen': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            'base_salary': job.get('base_salary'),
+            'job_type': job.get('tenure'),
+            'job_level': 'N/A',
+            'job_apply_end_date': job.get('application_end_date'),
+            'last_seen': '',
+            'is_active': 'True',
+            'company': job.get('company_name'),
+            'company_url': f"https://www.kalibrr.com/id-ID/c/{job.get('company_info', {}).get('code', '')}/jobs",
+            'job_board': 'Kalibrr',
+            'job_board_url': 'https://www.kalibrr.com/id-ID/home'
+        }
