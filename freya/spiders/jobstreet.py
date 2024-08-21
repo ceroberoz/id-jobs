@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing_extensions import Optional
 import scrapy
 import json
 from datetime import datetime
@@ -11,7 +12,7 @@ from scrapy.utils.project import get_project_settings
 def clean_string(text):
     if not isinstance(text, str):
         return text
-    return text.replace(',', ' ').replace('\n', ' ').strip()
+    return text.replace('-', ' ').replace('=', ' ').replace(';', ' ').replace(',', ' ').replace('\n', ' ').strip()
 
 def generate_random_id():
     return str(uuid.uuid4())
@@ -118,12 +119,14 @@ class JobstreetSpider(scrapy.Spider):
             'company': clean_string(job.get('companyName', '')),
             'company_url': '',
             'job_board': 'Jobstreet',
-            'job_board_url': 'https://id.jobstreet.com/',
-            'job_description': clean_string(job.get('teaser', '')),
-            'advertiser_id': clean_string(job.get('advertiser', {}).get('id', '')),
-            'job_id': clean_string(job.get('id', '')),
-            'list_date': clean_string(job.get('listingDateDisplay', '')),
-            'work_arrangements': clean_string(', '.join([arr.get('label', '') for arr in job.get('workArrangements', {}).get('data', [])])),
-            'is_premium': job.get('isPremium', False),
-            'is_stand_out': job.get('isStandOut', False),
+            'job_board_url': 'https://id.jobstreet.com/'
+
+            # Optional
+            # 'job_description': clean_string(job.get('teaser', '')),
+            # 'advertiser_id': clean_string(job.get('advertiser', {}).get('id', '')),
+            # 'job_id': clean_string(job.get('id', '')),
+            # 'list_date': clean_string(job.get('listingDateDisplay', '')),
+            # 'work_arrangements': clean_string(', '.join([arr.get('label', '') for arr in job.get('workArrangements', {}).get('data', [])])),
+            # 'is_premium': job.get('isPremium', False),
+            # 'is_stand_out': job.get('isStandOut', False),
         }
