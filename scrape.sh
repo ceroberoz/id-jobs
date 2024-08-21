@@ -20,7 +20,7 @@ echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_t
 # Process spider files
 found_files=false
 for spider_file in "$spider_dir"/*.py; do
-    if [[ -f "$spider_file" ]]; do
+    if [[ -f "$spider_file" ]]; then
         filename=$(basename "$spider_file" .py)
         output_file="$output_dir/${filename}.csv"
 
