@@ -1,43 +1,41 @@
 #!/bin/bash
 
-# Set the directory path
+set -euo pipefail
+
+# Set the directory paths
 spider_dir="./freya/spiders"
 output_dir="./output"
+merged_file="$output_dir/merged.csv"
 
 # Create output directory if it doesn't exist
 mkdir -p "$output_dir"
 
-# Initialize an array to store output file names
-output_files=()
+# Empty the merged.csv file or create a new empty file
+> "$merged_file"
+echo "Emptied or created merged.csv file."
 
-# Loop through all .py files in the spider directory
+# Initialize the merged file with the header
+echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url" > "$merged_file"
+
+# Process spider files
+found_files=false
 for spider_file in "$spider_dir"/*.py; do
-    if [ -f "$spider_file" ]; then
-        # Extract filename without extension
+    if [[ -f "$spider_file" ]]; do
         filename=$(basename "$spider_file" .py)
+        output_file="$output_dir/${filename}.csv"
 
-        # Run scrapy command
-        scrapy crawl "$filename" -o "$output_dir/${filename}.csv" -t csv
+        echo "Processing $filename..."
+        scrapy crawl "$filename" -o "$output_file" -t csv
 
-        # Add output file to the array
-        output_files+=("$output_dir/${filename}.csv")
+        if [[ -f "$output_file" ]]; then
+            tail -n +2 "$output_file" >> "$merged_file"
+            found_files=true
+        fi
     fi
 done
 
-# Merge all output CSV files
-output_merged="$output_dir/merged.csv"
-
-# Check if there are any output files
-if [ ${#output_files[@]} -gt 0 ]; then
-    # Initialize the merged file with the header
-    echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url" > "$output_merged"
-
-    # Append the content of all files (excluding headers) to the merged file
-    for file in "${output_files[@]}"; do
-        tail -n +2 "$file" >> "$output_merged"
-    done
-
-    echo "Merged CSV file created: $output_merged"
+if $found_files; then
+    echo "Merged CSV file updated: $merged_file"
 else
     echo "No output files found to merge."
 fi

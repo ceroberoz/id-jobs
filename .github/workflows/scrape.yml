@@ -13,27 +13,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.x"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install scrapy
+          pip install -r requirements.txt scrapy
           playwright install
 
       - name: Run scraping script
-        run: |
-          chmod +x ./scrape.sh
-          ./scrape.sh
+        run: ./scrape.sh
 
-      - name: Upload CSV files
-        uses: actions/upload-artifact@v2
+      - name: Move CSV files to public directory
+        run: |
+          mkdir -p public
+          mv output/*.csv public/
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add public/*.csv
+          git diff --staged --quiet || git commit -m "Update scraped data" && git push
+
+      - name: Upload CSV files as artifact
+        uses: actions/upload-artifact@v3
         with:
           name: scraped-data
-          path: ./output/*.csv
+          path: public/*.csv
