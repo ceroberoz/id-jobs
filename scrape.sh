@@ -20,8 +20,14 @@ echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_t
 # Process spider files
 found_files=false
 for spider_file in "$spider_dir"/*.py; do
+    filename=$(basename "$spider_file" .py)
+
+    # Skip __init__.py file
+    if [[ "$filename" == "__init__" ]]; then
+        continue
+    fi
+
     if [[ -f "$spider_file" ]]; then
-        filename=$(basename "$spider_file" .py)
         output_file="$output_dir/${filename}.csv"
 
         echo "Processing $filename..."
