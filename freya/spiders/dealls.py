@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class DeallsSpiderJson(scrapy.Spider):
-    name = 'dealls-json'
+    name = 'dealls'
     base_url = 'https://api.sejutacita.id/v1/explore-job/job?page=1&limit=18&published=true&status=active&prioritizeNonFilledApplicantQuota=true&sortBy=asc&sortParam=mostRelevant&includeNegotiableSalary=true&salaryMax=0'
 
     # Get timestamp in human readable format
@@ -88,7 +88,7 @@ class DeallsSpiderJson(scrapy.Spider):
             next_page = data['data']['page'] + 1    # Get next max_pages
             next_page_url = f"https://api.sejutacita.id/v1/explore-job/job?page={next_page}&limit=18&published=true&status=active&prioritizeNonFilledApplicantQuota=true&sortBy=asc&sortParam=mostRelevant&includeNegotiableSalary=true&salaryMax=0"
             yield scrapy.Request(next_page_url)
-            
+
         except json.JSONDecodeError as e:
             # Handle JSON decoding errors
             self.logger.error(f"Error decoding JSON: {e}")

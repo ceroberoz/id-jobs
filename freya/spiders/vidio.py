@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class VidioSpiderXPath(scrapy.Spider):
-    name = 'vidio-xpath'
+    name = 'vidio' #xpath
     base_url = 'https://careers.vidio.com'
 
     # Get timestamp in human readable format

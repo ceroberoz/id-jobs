@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class KalibrrSpiderJson(scrapy.Spider):
-    name = 'kalibrr-json'
+    name = 'kalibrr' #json
     base_url = 'https://www.kalibrr.com/kjs/job_board/search?limit=2000&offset={}'
 
     def start_requests(self):

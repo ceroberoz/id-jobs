@@ -4,9 +4,6 @@
 spider_dir="./freya/spiders"
 output_dir="./output"
 
-# Get current date in the format YYYY-MM-DD
-current_date=$(date +"%Y-%m-%d")
-
 # Create output directory if it doesn't exist
 mkdir -p "$output_dir"
 
@@ -20,10 +17,10 @@ for spider_file in "$spider_dir"/*.py; do
         filename=$(basename "$spider_file" .py)
 
         # Run scrapy command
-        scrapy crawl "$filename" -o "$output_dir/${current_date}-${filename}.csv" -t csv
+        scrapy crawl "$filename" -o "$output_dir/${filename}.csv" -t csv
 
         # Add output file to the array
-        output_files+=("$output_dir/${current_date}-${filename}.csv")
+        output_files+=("$output_dir/${filename}.csv")
     fi
 done
 
