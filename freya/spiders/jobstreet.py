@@ -4,18 +4,69 @@ import json
 from datetime import datetime
 import random
 import urllib.parse
+import time
+import uuid
+from scrapy.utils.project import get_project_settings
 
 def clean_string(text):
     if not isinstance(text, str):
         return text
     return text.replace(',', ' ').replace('\n', ' ').strip()
 
+def generate_random_id():
+    return str(uuid.uuid4())
+
+def generate_random_query_id():
+    return f"{uuid.uuid4().hex}-{random.randint(1000000, 9999999)}"
+
 class JobstreetSpider(scrapy.Spider):
     name = 'jobstreet'
     base_url = 'https://id.jobstreet.com/api/chalice-search/v4/search'
 
+    def __init__(self, *args, **kwargs):
+        super(JobstreetSpider, self).__init__(*args, **kwargs)
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
+        ]
+        self.settings = get_project_settings()
+
     def start_requests(self):
-        headers = {
+        concurrent_requests = self.settings.getint('CONCURRENT_REQUESTS', 16)
+        download_delay = self.settings.getfloat('DOWNLOAD_DELAY', 0.25)
+
+        for page in range(1, 1001):  # Crawl up to page 1000
+            user_id = generate_random_id()
+            params = {
+                'siteKey': 'ID-Main',
+                'sourcesystem': 'houston',
+                'userqueryid': generate_random_query_id(),
+                'userid': user_id,
+                'usersessionid': user_id,
+                'eventCaptureSessionId': user_id,
+                'page': str(page),
+                'seekSelectAllPages': 'true',
+                'sortmode': 'ListedDate',
+                'pageSize': '30',
+                'include': 'seodata',
+                'locale': 'id-ID',
+                'solId': generate_random_id()
+            }
+
+            headers = self.get_headers()
+
+            yield scrapy.Request(
+                url=f"{self.base_url}?{urllib.parse.urlencode(params)}",
+                headers=headers,
+                callback=self.parse,
+                meta={'download_delay': download_delay}
+            )
+
+    def get_headers(self):
+        return {
             'accept': 'application/json, text/plain, */*',
             'accept-language': 'en-US,en;q=0.9',
             'cache-control': 'no-cache',
@@ -29,34 +80,11 @@ class JobstreetSpider(scrapy.Spider):
             'sec-gpc': '1',
             'seek-request-brand': 'jobstreet',
             'seek-request-country': 'ID',
-            'user-agent': 'Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.188 Safari/537.36 CrKey/1.54.250320',
+            'user-agent': random.choice(self.user_agents),
             'x-forwarded-for': f'1.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}',
             'x-seek-checksum': '129cf744',
             'x-seek-site': 'Chalice'
         }
-
-        for page in range(1, 1001):  # Crawl up to page 1000
-            params = {
-                'siteKey': 'ID-Main',
-                'sourcesystem': 'houston',
-                'userqueryid': 'd751713988987e9331980363e24189ce-0531699',
-                'userid': 'b2a4f3f8-116d-41de-9dc1-4e7cbb574373',
-                'usersessionid': 'b2a4f3f8-116d-41de-9dc1-4e7cbb574373',
-                'eventCaptureSessionId': 'b2a4f3f8-116d-41de-9dc1-4e7cbb574373',
-                'page': str(page),
-                'seekSelectAllPages': 'true',
-                'sortmode': 'ListedDate',
-                'pageSize': '30',
-                'include': 'seodata',
-                'locale': 'id-ID',
-                'solId': 'a7a7e3ac-ec9c-4845-84d6-5cfb696ae79a'
-            }
-
-            yield scrapy.Request(
-                url=f"{self.base_url}?{urllib.parse.urlencode(params)}",
-                headers=headers,
-                callback=self.parse
-            )
 
     def parse(self, response):
         try:
@@ -65,6 +93,9 @@ class JobstreetSpider(scrapy.Spider):
 
             for job in jobs:
                 yield self.parse_job(job)
+
+            # Add a random delay between requests
+            time.sleep(response.meta['download_delay'] + random.uniform(0.5, 1.5))
 
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding JSON: {e}")
