@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 
 class BlibliSpiderJson(scrapy.Spider):
-    name = 'blibli-json'
+    name = 'blibli'
     base_url = 'https://careers.blibli.com/ext/api/job/list.json?format=COMPLETE&groupBy=true'
 
     # Get timestamp in human readable format

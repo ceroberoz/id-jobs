@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class GotoSpiderJson(scrapy.Spider):
-    name = 'goto-json'
+    name = 'goto'
     base_url = 'https://api.tokopedia.com/ent-hris/career/job?company=HoldCo&search=&location=&department='
 
     # Get timestamp in human readable format
@@ -14,7 +14,7 @@ class GotoSpiderJson(scrapy.Spider):
 
     # override ROBOTSTXT_OBEY = False
     custom_settings = {
-        'ROBOTSTXT_OBEY': False   
+        'ROBOTSTXT_OBEY': False
     }
 
     def start_requests(self):

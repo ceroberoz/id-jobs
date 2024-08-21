@@ -2,7 +2,7 @@ import scrapy
 from datetime import datetime
 
 class SehatqSpiderXPath(scrapy.Spider):
-    name = 'sehatq-xpath'
+    name = 'sehatq' #xpath
     start_urls = ['https://www.sehatq.com/karir']
 
     # Get timestamp in human readable format
@@ -17,7 +17,7 @@ class SehatqSpiderXPath(scrapy.Spider):
         # Iterate over xpath levels
         for i in range(1, xpath_level):
             # Iterate over element indexes
-            
+
             # Construct xpath for Job Position
             xpath_selector_job_position = f'//*[@id="__next"]/div[1]/div/div/div[1]/div[{i}]/div[1]'
             self.job_position = f'{xpath_selector_job_position}//text()'
@@ -35,7 +35,7 @@ class SehatqSpiderXPath(scrapy.Spider):
                 # /html/body/div[1]/div[1]/div/div/div[1]/div[4]/div[2]/div[2]/a[1]
                 xpath_selector_job_url = f'//*[@id="__next"]/div[1]/div/div/div[1]/div[{i}]/div[{j}]/div[2]/a[1]'
                 job_url = f'{xpath_selector_job_url}/@href'
-                
+
                 # Construct relative xpath element
                 xpath_selector_element = f'//*[@id="__next"]/div[1]/div/div/div[1]/div[{i}]/div[{j}]'
 

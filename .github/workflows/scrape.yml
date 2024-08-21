@@ -1,0 +1,37 @@
+name: Run Scrapy Spiders
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * *" # Run daily at midnight UTC
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install scrapy
+
+      - name: Run scraping script
+        run: |
+          chmod +x ./scrape.sh
+          ./scrape.sh
+
+      - name: Upload CSV files
+        uses: actions/upload-artifact@v2
+        with:
+          name: scraped-data
+          path: ./output/*.csv
