@@ -6,7 +6,10 @@ Explore the coolest **Bare Lazy Minimum Product** in Google Sheets format!
 https://s.id/id-jobs
 
 Made with Python and Scrapy with Codeium.
+
 [![built with Codeium](https://codeium.com/badges/main)](https://codeium.com)
+
+[![Run Scrapy Spiders](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
 
 =========================================================================
 
