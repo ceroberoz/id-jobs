@@ -38,7 +38,7 @@ except KeyError:
     GCP_PROJECT_ID = None
 
 # Build the Sheets API service
-service = build('sheets', 'v4', credentials=creds, project=GCP_PROJECT_ID)
+service = build('sheets', 'v4', credentials=creds)
 
 # Get the Sheet ID from environment variable
 try:
