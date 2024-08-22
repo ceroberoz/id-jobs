@@ -1,4 +1,4 @@
-name: Scrape Job Data
+name: Scrape Job Data and Upload to Google Sheets
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  scrape:
+  scrape-and-upload:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,44 +26,34 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-          cache: "pip"
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt scrapy pandas google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-          playwright install
+          pip install scrapy google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+
+      # - name: Run scrape.sh
+      #   run: bash scrape.sh
+
+      # - name: Check for CSV files
+      #   run: |
+      #     if ls output/*.csv 1> /dev/null 2>&1; then
+      #       echo "CSV files found."
+      #     else
+      #       echo "No CSV files found. Exiting."
+      #       exit 1
+      #     fi
+
+      # - name: Move CSV files to public directory
+      #   run: |
+      #     mkdir -p public
+      #     mv output/*.csv public/
+
+      - name: Upload to Google Sheets
         env:
-          PIP_CACHE_DIR: .pip_cache
-
-      - name: Validate Python installation
-        run: |
-          python --version
-          pip --version
-
-      - name: Run scraping script
-        run: ./scrape.sh
-
-      - name: Check for CSV files
-        run: |
-          if ls output/*.csv 1> /dev/null 2>&1; then
-            echo "CSV files found."
-          else
-            echo "No CSV files found. Exiting."
-            exit 1
-          fi
-
-      - name: Move CSV files to public directory
-        run: |
-          mkdir -p public
-          mv output/*.csv public/
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+        run: python upload_to_sheets.py
 
       - name: Commit and push changes
         run: |
@@ -72,13 +62,3 @@ jobs:
           git add public/*.csv
           git commit -m "[skip ci] Updated job data" || echo "No changes to commit"
           git push
-
-      - name: Upload CSV to Spreadsheet
-        if: success()
-        uses: canonical-web-and-design/csv-to-google-spreadsheet@1.0.0
-        with:
-          csv_path: public/merged.csv
-          spreadsheet_id: ${{ secrets.GOOGLE_SHEET_ID }}
-          worksheet: 0
-          google_service_account_email: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
-          google_service_account_private_key: ${{ secrets.google_service_account_private_key }}
