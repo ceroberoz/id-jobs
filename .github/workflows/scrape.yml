@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload to Google Sheets
         env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_SA_KEY: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
         run: python upload_to_sheets.py
 

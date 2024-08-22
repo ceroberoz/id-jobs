@@ -14,7 +14,7 @@ def get_env_var(var_name):
     return value
 
 def setup_credentials():
-    creds_json = get_env_var('GCP_SA_KEY')
+    creds_json = get_env_var('GCP_JSON')  # Changed from GCP_SA_KEY to GCP_JSON
     try:
         creds_dict = json.loads(creds_json)
         return service_account.Credentials.from_service_account_info(
@@ -22,7 +22,7 @@ def setup_credentials():
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
     except json.JSONDecodeError:
-        print("Error: Invalid JSON in GCP_SA_KEY")
+        print("Error: Invalid JSON in GCP_JSON")  # Changed error message
         sys.exit(1)
 
 def read_csv(file_path):
