@@ -73,8 +73,12 @@ jobs:
           git commit -m "[skip ci] Updated job data" || echo "No changes to commit"
           git push
 
-      - name: Trigger Update Google Sheets Workflow
-        uses: peter-evans/repository-dispatch@v2
+      - name: Upload CSV to Spreadsheet
+        if: success()
+        uses: canonical-web-and-design/csv-to-google-spreadsheet@main
         with:
-          token: ${{ secrets.MEONG }}
-          event-type: update-sheets
+          csv_path: public/merged.csv
+          spreadsheet_id: ${{ secrets.GOOGLE_SHEET_ID }}
+          worksheet: 0
+          google_service_account_email: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+          google_service_account_private_key: ${{ secrets.GCP_SA_KEY }}
