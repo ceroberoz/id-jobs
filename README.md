@@ -1,75 +1,77 @@
-# id-jobs: Your Treasure Map to Indonesian Job Opportunities! 🗺️💼
+# id-jobs: Your Gateway to Indonesian Job Market Data! 🚀💼
 
-Ahoy, job seekers and data enthusiasts! Welcome to id-jobs, your ultimate adventure guide to the exciting world of Indonesian employment. We've scoured the digital seas to bring you a treasure trove of job listings, all neatly charted in a user-friendly Google Sheets map. Whether you're hunting for your dream job, recruiting top talent, or just curious about the job market landscape, id-jobs is your trusty compass!
+Hey there, job seekers, recruiters, and data enthusiasts! Welcome to id-jobs 2.0, your ultimate tool for exploring the exciting world of Indonesian employment. We've aggregated job listings from top companies and portals, all neatly organized in a user-friendly Google Sheet. Whether you're hunting for your dream job, recruiting top talent, or just curious about the job market landscape, id-jobs is your go-to resource!
 
-🔗 Set sail for job data: [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
+🔗 Access the latest job data: [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
 
 [![built with Codeium](https://codeium.com/badges/main)](https://codeium.com)
 [![Run Scrapy Spiders](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
 
-## What's the id-jobs treasure all about? 🏴‍☠️
+## What's id-jobs all about? 🔍
 
-id-jobs is your friendly neighborhood job data pirate (the good kind!), sailing the vast internet seas to gather shiny job opportunities from various Indonesian islands (companies) and ports (job portals). We use the mystical powers of Python and Scrapy to continuously update our treasure map, ensuring you always have the freshest leads!
+id-jobs is an open-source project that aggregates job listings from top Indonesian companies and job portals, all in one easy-to-use Google Sheet! We use Python and Scrapy to continuously update our data, ensuring you always have the most current information.
 
-## Why you'll fall in love with id-jobs ❤️
+## Why you'll love id-jobs ❤️
 
-- 🕒 Always on the horizon: Our tireless job-hunting spiders keep your treasure map up-to-date
-- 🌈 A rainbow of opportunities: From tech unicorns to hidden startup gems, we've got a chest full of diverse jobs
-- 📊 X marks the spot: All job treasures are neatly organized in Google Sheets for easy digging
+- 🕒 Always fresh: Our sheets are updated DAILY at 00:00 UTC
+- 🌈 Comprehensive data: We've added even more job sources in version 2.0
+- 📊 Improved accuracy: Our data is more reliable than ever
+- 👩‍💻 Beginner-friendly: Perfect for those starting their coding journey
 
-## Our favorite hunting grounds 🏝️
+## Who is id-jobs for? 👥
 
-We explore far and wide, including:
+- Job seekers looking for roles that match their skills, location, and salary expectations
+- Recruiters seeking to understand the Indonesian job market
+- Data enthusiasts interested in analyzing employment trends
+- Coding newbies wanting to practice web scraping and data analysis
 
-- 🎥 Vidio Island
-- 🛒 GoTo Archipelago
-- 🛍️ Blibli Bay
-- 👕 Evermos Cove
-- And many more uncharted territories! (Check our maps in the source code)
+## Get started in 4 easy steps! 🚀
 
-## Join the crew (It's a piece of cake, matey!) 🏴‍☠️
-
-1. Clone the treasure map:
+1. Clone the repo:
    ```
    git clone https://github.com/ceroberoz/id-jobs.git
    cd id-jobs
    ```
 
-2. Create your secret hideout (virtual environment):
+2. Set up your environment:
    ```
    python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Gather your pirate tools (install dependencies):
+3. Install dependencies:
    ```
    pip install -r requirements.txt
    playwright install
    ```
 
-4. Set sail with a job-hunting spider:
+4. Run your first job crawler:
    ```
    scrapy crawl <crawler-name>
    ```
-   Replace `<crawler-name>` with your chosen adventure (e.g., `vidio`, `gotogroup`)
+   Replace `<crawler-name>` with your chosen crawler (e.g., `vidio`, `gotogroup`)
 
-## Chart your own course! 🧭
+## Visualize your data 📊
 
-New to coding? No worries! This project is perfect for beginners looking to dip their toes into web scraping and data analysis. Start by exploring the code, run a few spiders, and before you know it, you'll be a data pirate pro!
+Want to create stunning visualizations with the job data? Here's how:
 
-## Create your own treasure maps 🗺️
+1. Download the Google Sheet as a CSV file.
+2. Import this CSV into tools like Google Looker Studio or Tableau.
+3. Create insightful dashboards to reveal trends in the Indonesian job market!
 
-Want to turn your job data into dazzling visuals? Here's how to connect id-jobs to powerful tools like Google Looker Studio or Tableau:
+## Learn more 📚
 
-1. Download your Google Sheets treasure map as a CSV file.
-2. Import this CSV booty into your favorite visualization tool.
-3. Craft stunning dashboards to reveal insights about the Indonesian job market!
+- [Scrapy Documentation](https://docs.scrapy.org/en/latest/intro/overview.html) - Master web scraping
+- [Playwright Documentation](https://playwright.dev/docs/intro) - Become a browser automation pro
 
-## Expand your pirate knowledge 📚
+## Important note 🇮🇩
 
-- [Scrapy Documentation](https://docs.scrapy.org/en/latest/intro/overview.html) - Master the art of web scraping
-- [Playwright Documentation](https://playwright.dev/docs/intro) - Become a browser automation wizard
+id-jobs is specifically tailored for the Indonesian job market. It's our way of addressing the unique challenges and opportunities in our local job scene!
 
-## The Pirate Code (License)
+## License
 
-This treasure is shared under the GNU General Public License v3 (GPL-3.0). Share the wealth and keep the high seas of open source free! ❤️
+This project is shared under the GNU General Public License v3 (GPL-3.0). Let's democratize job market data together! ❤️
+
+If you're excited about this project, don't forget to fork, star, and share!
+
+#OpenSource #DataScience #JobMarket #Indonesia #CodingForBeginners #GitHub
