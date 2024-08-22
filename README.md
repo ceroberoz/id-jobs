@@ -18,6 +18,10 @@ id-jobs is an open-source project that aggregates job listings from top Indonesi
 - 📊 Improved accuracy: Our data is more reliable than ever
 - 👩‍💻 Beginner-friendly: Perfect for those starting their coding journey
 
+## Important Note ⚠️
+
+Some spiders might not be working due to recent changes in the source websites. As a result, some data might not be showing up on the Google Sheet. We're working on repairing these issues as quickly as possible. Thanks for your patience and understanding!
+
 ## Who is id-jobs for? 👥
 
 - Job seekers looking for roles that match their skills, location, and salary expectations
