@@ -34,7 +34,7 @@ service = build('sheets', 'v4', credentials=creds)
 
 # Get the Sheet ID from environment variable
 try:
-    SHEET_ID = os.environ['SHEET_ID']
+    SHEET_ID = os.environ['GOOGLE_SHEET_ID']
     if not SHEET_ID:
         raise ValueError("SHEET_ID is empty")
 except KeyError:
