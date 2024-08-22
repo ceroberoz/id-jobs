@@ -1,12 +1,22 @@
 import os
+import json
 import datetime
 import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 # Set up credentials
+gcp_sa_key = os.environ.get('GCP_SA_KEY')
+if not gcp_sa_key:
+    raise ValueError("GCP_SA_KEY environment variable is not set")
+
+try:
+    service_account_info = json.loads(gcp_sa_key)
+except json.JSONDecodeError:
+    raise ValueError("GCP_SA_KEY is not a valid JSON string")
+
 creds = service_account.Credentials.from_service_account_info(
-    eval(os.environ['GCP_SA_KEY']),
+    service_account_info,
     scopes=['https://www.googleapis.com/auth/spreadsheets']
 )
 
@@ -14,7 +24,9 @@ creds = service_account.Credentials.from_service_account_info(
 service = build('sheets', 'v4', credentials=creds)
 
 # Get the Sheet ID from environment variable
-SHEET_ID = os.environ['SHEET_ID']
+SHEET_ID = os.environ.get('SHEET_ID')
+if not SHEET_ID:
+    raise ValueError("SHEET_ID environment variable is not set")
 
 # Read the existing merged CSV file
 csv_file = 'public/merged.csv'
@@ -34,19 +46,27 @@ try:
         spreadsheetId=SHEET_ID,
         range=f'{sheet_name}!A1:Z'
     ).execute()
-except:
+except Exception as e:
+    print(f"Error clearing sheet: {e}")
     # If sheet doesn't exist, add a new one
-    service.spreadsheets().batchUpdate(
-        spreadsheetId=SHEET_ID,
-        body={'requests': [{'addSheet': {'properties': {'title': sheet_name}}}]}
-    ).execute()
+    try:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=SHEET_ID,
+            body={'requests': [{'addSheet': {'properties': {'title': sheet_name}}}]}
+        ).execute()
+    except Exception as e:
+        print(f"Error creating new sheet: {e}")
+        raise
 
 # Update sheet with new data
-service.spreadsheets().values().update(
-    spreadsheetId=SHEET_ID,
-    range=f'{sheet_name}!A1',
-    valueInputOption='RAW',
-    body={'values': values}
-).execute()
-
-print("Google Sheets updated successfully with merged data!")
+try:
+    service.spreadsheets().values().update(
+        spreadsheetId=SHEET_ID,
+        range=f'{sheet_name}!A1',
+        valueInputOption='RAW',
+        body={'values': values}
+    ).execute()
+    print("Google Sheets updated successfully with merged data!")
+except Exception as e:
+    print(f"Error updating sheet: {e}")
+    raise

@@ -28,6 +28,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Update Google Sheets
-        env:
-          SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: python update_sheets.py
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
