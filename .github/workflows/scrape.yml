@@ -1,20 +1,20 @@
-name: Run Scrapy Spiders
+name: id-jobs-update
 
 on:
   push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+    branches:
+      - main
+  pull_request_target:
+  
   schedule:
-    - cron: "0 0 * * *" # Run daily at midnight UTC
+    - cron: '0 0 * * *' # Schedule to run at midnight (UTC time)
 
 jobs:
-  scrape:
+  id-jobs-update:
+    runs-on: ubuntu-latest
+    
     permissions:
       contents: write
-      pull-requests: write
-
-    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -35,19 +35,40 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt scrapy
           playwright install
+        env:
+          PIP_CACHE_DIR: .pip_cache
+
+      - name: Validate Python installation
+        run: |
+          python --version
+          pip --version
+        continue-on-error: false
 
       - name: Run scraping script
         run: ./scrape.sh
+
+      - name: Check for CSV files
+        run: |
+          if ls output/*.csv 1> /dev/null 2>&1; then
+            echo "CSV files found."
+          else
+            echo "No CSV files found. Exiting."
+            exit 1
+          fi
 
       - name: Move CSV files to public directory
         run: |
           mkdir -p public
           mv output/*.csv public/
 
-      - name: Create Pull Request
+      - name: Create Pull Request if changes are detected
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "[skip ci] - updated"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+        env:
+          GITHUB_TOKEN: ${{ secrets.MEONG }}
 
       - name: Upload CSV files as artifact
         uses: actions/upload-artifact@v3
