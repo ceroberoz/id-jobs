@@ -5,14 +5,16 @@ on:
     branches:
       - main
   pull_request_target:
-  
+
   schedule:
-    - cron: '0 0 * * *' # Schedule to run at midnight (UTC time)
+    - cron: "0 0 * * *" # Schedule to run at midnight (UTC time)
+
+  workflow_dispatch: # Add this line to enable manual triggering
 
 jobs:
   id-jobs-update:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write
 
