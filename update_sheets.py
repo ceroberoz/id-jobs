@@ -7,6 +7,7 @@ try:
     import pandas as pd
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
 except ImportError as e:
     print(f"Error: {e}. Please make sure all required packages are installed.")
     sys.exit(1)
@@ -34,9 +35,16 @@ service = build('sheets', 'v4', credentials=creds)
 # Get the Sheet ID from environment variable
 try:
     SHEET_ID = os.environ['SHEET_ID']
+    if not SHEET_ID:
+        raise ValueError("SHEET_ID is empty")
 except KeyError:
     print("Error: SHEET_ID environment variable not set.")
     sys.exit(1)
+except ValueError as e:
+    print(f"Error: {e}")
+    sys.exit(1)
+
+print(f"Using Sheet ID: {SHEET_ID}")
 
 # Read the existing merged CSV file
 csv_file = 'public/merged.csv'
@@ -72,6 +80,10 @@ try:
             spreadsheetId=SHEET_ID,
             body={'requests': [{'addSheet': {'properties': {'title': sheet_name}}}]}
         ).execute()
+except HttpError as e:
+    print(f"HTTP Error occurred: {e}")
+    print(f"Response content: {e.content}")
+    sys.exit(1)
 except Exception as e:
     print(f"Error checking/creating sheet: {e}")
     sys.exit(1)
@@ -85,6 +97,10 @@ try:
         body={'values': values}
     ).execute()
     print(f"Google Sheets updated successfully with merged data in sheet: {sheet_name}")
+except HttpError as e:
+    print(f"HTTP Error occurred while updating sheet: {e}")
+    print(f"Response content: {e.content}")
+    sys.exit(1)
 except Exception as e:
     print(f"Error updating Google Sheets: {e}")
     sys.exit(1)

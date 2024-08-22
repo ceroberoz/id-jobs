@@ -26,3 +26,9 @@ jobs:
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
+
+      - name: Debug Information
+        if: failure()
+        run: |
+          echo "GCP_SA_KEY is set: ${{ secrets.GCP_SA_KEY != '' }}"
+          echo "SHEET_ID is set: ${{ secrets.SHEET_ID != '' }}"
