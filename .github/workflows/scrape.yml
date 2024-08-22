@@ -3,7 +3,7 @@ name: id-jobs-update
 on:
   push:
     branches:
-      - main
+      - master
   pull_request_target:
 
   schedule:
@@ -83,7 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MEONG }}
 
       - name: Upload CSV files as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: scraped-data
           path: public/*.csv
