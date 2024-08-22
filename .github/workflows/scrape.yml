@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt scrapy
+          pip install -r requirements.txt scrapy pandas google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
           playwright install
         env:
           PIP_CACHE_DIR: .pip_cache
@@ -65,14 +65,16 @@ jobs:
           mkdir -p public
           mv output/*.csv public/
 
-      - name: Upload CSV files as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: scraped-data
-          path: public/*.csv
+      - name: Update Google Sheets
+        run: python update_sheets.py
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
 
-      - name: Trigger PR Creation
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.MEONG }}
-          event-type: create-pr
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/*.csv
+          git commit -m "[skip ci] Updated job data" || echo "No changes to commit"
+          git push
