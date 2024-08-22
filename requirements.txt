@@ -49,7 +49,7 @@ six==1.16.0
 stack-data==0.6.3
 tldextract==5.0.1
 traitlets==5.11.2
-Twisted==23.8.0
+Twisted==23.7.0  # Downgraded to be compatible with Scrapy 2.11.0
 typing_extensions==4.8.0
 urllib3==2.0.7
 w3lib==2.1.2
