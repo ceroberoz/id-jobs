@@ -29,16 +29,24 @@ except KeyError:
     print("Error: GCP_SA_KEY environment variable not set.")
     sys.exit(1)
 
+# Get the GCP Project ID
+try:
+    GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']
+    print(f"Using GCP Project ID: {GCP_PROJECT_ID}")
+except KeyError:
+    print("Warning: GCP_PROJECT_ID environment variable not set.")
+    GCP_PROJECT_ID = None
+
 # Build the Sheets API service
-service = build('sheets', 'v4', credentials=creds)
+service = build('sheets', 'v4', credentials=creds, project=GCP_PROJECT_ID)
 
 # Get the Sheet ID from environment variable
 try:
     SHEET_ID = os.environ['GOOGLE_SHEET_ID']
     if not SHEET_ID:
-        raise ValueError("SHEET_ID is empty")
+        raise ValueError("GOOGLE_SHEET_ID is empty")
 except KeyError:
-    print("Error: SHEET_ID environment variable not set.")
+    print("Error: GOOGLE_SHEET_ID environment variable not set.")
     sys.exit(1)
 except ValueError as e:
     print(f"Error: {e}")
@@ -52,6 +60,16 @@ try:
     df = pd.read_csv(csv_file)
 except FileNotFoundError:
     print(f"Error: CSV file '{csv_file}' not found.")
+    sys.exit(1)
+except pd.errors.EmptyDataError:
+    print(f"Error: CSV file '{csv_file}' is empty.")
+    sys.exit(1)
+except pd.errors.ParserError:
+    print(f"Error: Unable to parse CSV file '{csv_file}'.")
+    sys.exit(1)
+
+if df.empty:
+    print("Error: No data in the CSV file.")
     sys.exit(1)
 
 # Convert DataFrame to list of lists

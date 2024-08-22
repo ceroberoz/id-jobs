@@ -16,19 +16,29 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+          pip install -r requirements.txt
 
       - name: Update Google Sheets
         run: python update_sheets.py
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Debug Information
         if: failure()
         run: |
           echo "GCP_SA_KEY is set: ${{ secrets.GCP_SA_KEY != '' }}"
-          echo "SHEET_ID is set: ${{ secrets.GOOGLE_SHEET_ID != '' }}"
+          echo "GOOGLE_SHEET_ID is set: ${{ secrets.GOOGLE_SHEET_ID != '' }}"
+          echo "GCP_PROJECT_ID is set: ${{ secrets.GCP_PROJECT_ID != '' }}"
