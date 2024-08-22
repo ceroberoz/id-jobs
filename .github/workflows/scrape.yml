@@ -1,64 +1,32 @@
-name: Scrape Job Data and Upload to Google Sheets
+ame: Scrape and Upload to Google Sheets
 
 on:
   push:
-    branches:
-      - master
-  pull_request_target:
+    branches: [master]
+  pull_request:
+    branches: [master]
   schedule:
     - cron: "0 0 * * *"
-  workflow_dispatch:
 
 jobs:
   scrape-and-upload:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.MEONG }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.head_ref }}
-
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install scrapy google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-
-      # - name: Run scrape.sh
-      #   run: bash scrape.sh
-
-      # - name: Check for CSV files
-      #   run: |
-      #     if ls output/*.csv 1> /dev/null 2>&1; then
-      #       echo "CSV files found."
-      #     else
-      #       echo "No CSV files found. Exiting."
-      #       exit 1
-      #     fi
-
-      # - name: Move CSV files to public directory
-      #   run: |
-      #     mkdir -p public
-      #     mv output/*.csv public/
-
+          pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+      - name: Run scraper
+        run: |
+          # Your scraping script here
+          # This should create public/merged.csv
       - name: Upload to Google Sheets
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
         run: python upload_to_sheets.py
-
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add public/*.csv
-          git commit -m "[skip ci] Updated job data" || echo "No changes to commit"
-          git push
