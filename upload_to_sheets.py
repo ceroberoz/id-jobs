@@ -40,6 +40,10 @@ def setup_credentials():
 def read_csv(file_path):
     try:
         df = pd.read_csv(file_path)
+        # Replace NaN values with empty strings
+        df = df.fillna('')
+        # Convert all values to strings and strip whitespace
+        df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
         return [df.columns.tolist()] + df.values.tolist()
     except FileNotFoundError:
         print(f"Error: CSV file not found at {file_path}")
@@ -51,6 +55,9 @@ def validate_data(data):
         return False
     # Add more validation as needed
     return True
+
+def clean_data(data):
+    return [[str(cell).replace('\n', ' ').strip() for cell in row] for row in data]
 
 @contextmanager
 def get_sheets_service(creds):
@@ -146,8 +153,10 @@ def main():
     if not validate_data(csv_content):
         sys.exit(1)
 
+    cleaned_content = clean_data(csv_content)
+
     with get_sheets_service(creds) as service:
-        upload_to_sheets(service, spreadsheet_id, csv_content)
+        upload_to_sheets(service, spreadsheet_id, cleaned_content)
 
 if __name__ == "__main__":
     main()
