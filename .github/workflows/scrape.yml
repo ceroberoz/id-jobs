@@ -77,15 +77,17 @@ jobs:
         run: |
           echo '${{ secrets.GCP_SA_KEY }}' > sa_key.json
           echo "SA_EMAIL=$(jq -r .client_email sa_key.json)" >> $GITHUB_ENV
-          echo "SA_KEY=$(jq -r .private_key sa_key.json)" >> $GITHUB_ENV
+          echo "SA_KEY=$(jq -r .private_key sa_key.json | base64 -w 0)" >> $GITHUB_ENV
         shell: bash
 
       - name: Upload CSV to Spreadsheet
         if: success()
-        uses: canonical-web-and-design/csv-to-google-spreadsheet@1.0.0
+        uses: canonical-web-and-design/csv-to-google-spreadsheet@main
         with:
           csv_path: public/merged.csv
           spreadsheet_id: ${{ secrets.GOOGLE_SHEET_ID }}
           worksheet: 0
           google_service_account_email: ${{ env.SA_EMAIL }}
           google_service_account_private_key: ${{ env.SA_KEY }}
+        env:
+          PRIVATE_KEY_DECODER: base64 -d
