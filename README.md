@@ -31,6 +31,30 @@ Some of our spider friends are taking an unplanned vacation due to website chang
 
 ## Get started faster than you can say "I quit"! 🚀
 
+### Optional: Install Python (if you haven't already)
+
+#### On Windows:
+1. Download Python from [python.org](https://www.python.org/downloads/windows/)
+2. Run the installer. Make sure to check "Add Python to PATH" during installation.
+
+#### On macOS:
+1. Install Homebrew if you haven't:
+   ```
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+2. Install Python:
+   ```
+   brew install python
+   ```
+
+#### On Linux (Ubuntu/Debian):
+```
+sudo apt-get update
+sudo apt-get install python3 python3-pip python3-venv
+```
+
+### Now, let's get id-jobs running!
+
 1. Clone the repo (it's like adopting a digital pet):
    ```
    git clone https://github.com/ceroberoz/id-jobs.git
@@ -38,9 +62,17 @@ Some of our spider friends are taking an unplanned vacation due to website chang
    ```
 
 2. Set up your environment (think of it as building a cozy home for your code):
+
+   On macOS and Linux:
    ```
    python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate
+   ```
+
+   On Windows:
+   ```
+   python -m venv venv
+   venv\Scripts\activate
    ```
 
 3. Install dependencies (like furnishing your code's new home):
@@ -54,6 +86,8 @@ Some of our spider friends are taking an unplanned vacation due to website chang
    scrapy crawl <crawler-name>
    ```
    Replace `<crawler-name>` with your chosen crawler (e.g., `vidio`, `gotogroup`)
+
+Don't worry if some of these terms sound like tech gibberish - you're learning! If you get stuck, there's a whole community of friendly coders ready to help. Happy job hunting! 🕷️🔍
 
 ## Turn data into eye candy 📊
 
