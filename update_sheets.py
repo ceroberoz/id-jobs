@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+from datetime import datetime
 
 try:
     import pandas as pd
@@ -10,57 +12,69 @@ except ImportError as e:
     sys.exit(1)
 
 # Set up credentials
-gcp_sa_key = os.environ.get('GCP_SA_KEY')
-if not gcp_sa_key:
-    raise ValueError("GCP_SA_KEY environment variable is not set")
-
 try:
-    service_account_info = json.loads(gcp_sa_key)
-except json.JSONDecodeError:
-    raise ValueError("GCP_SA_KEY is not a valid JSON string")
+    gcp_sa_key = os.environ['GCP_SA_KEY']
+    try:
+        service_account_info = json.loads(gcp_sa_key)
+    except json.JSONDecodeError:
+        print("Error: Invalid JSON in GCP_SA_KEY environment variable.")
+        sys.exit(1)
 
-creds = service_account.Credentials.from_service_account_info(
-    service_account_info,
-    scopes=['https://www.googleapis.com/auth/spreadsheets']
-)
+    creds = service_account.Credentials.from_service_account_info(
+        service_account_info,
+        scopes=['https://www.googleapis.com/auth/spreadsheets']
+    )
+except KeyError:
+    print("Error: GCP_SA_KEY environment variable not set.")
+    sys.exit(1)
 
 # Build the Sheets API service
 service = build('sheets', 'v4', credentials=creds)
 
 # Get the Sheet ID from environment variable
-SHEET_ID = os.environ.get('SHEET_ID')
-if not SHEET_ID:
-    raise ValueError("SHEET_ID environment variable is not set")
+try:
+    SHEET_ID = os.environ['SHEET_ID']
+except KeyError:
+    print("Error: SHEET_ID environment variable not set.")
+    sys.exit(1)
 
 # Read the existing merged CSV file
 csv_file = 'public/merged.csv'
-df = pd.read_csv(csv_file)
+try:
+    df = pd.read_csv(csv_file)
+except FileNotFoundError:
+    print(f"Error: CSV file '{csv_file}' not found.")
+    sys.exit(1)
 
 # Convert DataFrame to list of lists
 values = [df.columns.tolist()] + df.values.tolist()
 
-# Generate sheet name with current date
-current_date = datetime.date.today().strftime("%Y-%m-%d")
-sheet_name = f"{current_date} - id-jobs"
+# Sheet name with current date
+current_date = datetime.now().strftime("%Y-%m-%d")
+sheet_name = f'Jobs {current_date}'
 
 # Update or create sheet
 try:
-    # Try to clear existing content
-    service.spreadsheets().values().clear(
-        spreadsheetId=SHEET_ID,
-        range=f'{sheet_name}!A1:Z'
-    ).execute()
-except Exception as e:
-    print(f"Error clearing sheet: {e}")
-    # If sheet doesn't exist, add a new one
-    try:
+    # Check if the sheet already exists
+    sheet_metadata = service.spreadsheets().get(spreadsheetId=SHEET_ID).execute()
+    sheets = sheet_metadata.get('sheets', '')
+    sheet_exists = any(sheet['properties']['title'] == sheet_name for sheet in sheets)
+
+    if sheet_exists:
+        # If sheet exists, clear its content
+        service.spreadsheets().values().clear(
+            spreadsheetId=SHEET_ID,
+            range=f'{sheet_name}!A1:Z'
+        ).execute()
+    else:
+        # If sheet doesn't exist, add a new one
         service.spreadsheets().batchUpdate(
             spreadsheetId=SHEET_ID,
             body={'requests': [{'addSheet': {'properties': {'title': sheet_name}}}]}
         ).execute()
-    except Exception as e:
-        print(f"Error creating new sheet: {e}")
-        raise
+except Exception as e:
+    print(f"Error checking/creating sheet: {e}")
+    sys.exit(1)
 
 # Update sheet with new data
 try:
@@ -70,7 +84,7 @@ try:
         valueInputOption='RAW',
         body={'values': values}
     ).execute()
-    print("Google Sheets updated successfully with merged data!")
+    print(f"Google Sheets updated successfully with merged data in sheet: {sheet_name}")
 except Exception as e:
-    print(f"Error updating sheet: {e}")
-    raise
+    print(f"Error updating Google Sheets: {e}")
+    sys.exit(1)
