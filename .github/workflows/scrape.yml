@@ -1,23 +1,19 @@
-name: id-jobs-update
+name: Scrape Job Data
 
 on:
   push:
     branches:
       - master
   pull_request_target:
-
   schedule:
-    - cron: "0 0 * * *" # Schedule to run at midnight (UTC time)
-
-  workflow_dispatch: # Add this line to enable manual triggering
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
 jobs:
-  id-jobs-update:
+  scrape:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,9 +35,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Create pip cache directory
-        run: mkdir -p ~/.cache/pip
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -54,7 +47,6 @@ jobs:
         run: |
           python --version
           pip --version
-        continue-on-error: false
 
       - name: Run scraping script
         run: ./scrape.sh
@@ -73,32 +65,14 @@ jobs:
           mkdir -p public
           mv output/*.csv public/
 
-      - name: Create Pull Request if changes are detected
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "[skip ci] - updated"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "github-actions[bot]@users.noreply.github.com"
-        env:
-          GITHUB_TOKEN: ${{ secrets.MEONG }}
-
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-
-      - name: Install Google Sheets API client library
-        run: pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-
-      - name: Update Google Sheets
-        env:
-          SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
-        run: python update_sheets.py
-
       - name: Upload CSV files as artifact
         uses: actions/upload-artifact@v4
         with:
           name: scraped-data
           path: public/*.csv
+
+      - name: Trigger PR Creation
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.MEONG }}
+          event-type: create-pr

@@ -1,0 +1,29 @@
+name: Create Pull Request
+
+on:
+  repository_dispatch:
+    types: [create-pr]
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MEONG }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scraped-data
+          path: public
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.MEONG }}
+          commit-message: "[skip ci] - updated job data"
+          title: "Update job data"
+          body: "This PR updates the scraped job data."
+          branch: "update-job-data"
