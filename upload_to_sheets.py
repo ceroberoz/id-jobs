@@ -43,7 +43,7 @@ def read_csv(file_path):
         # Replace NaN values with empty strings
         df = df.fillna('')
         # Convert all values to strings and strip whitespace
-        df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+        df = df.astype(str).apply(lambda x: x.str.strip())
         return [df.columns.tolist()] + df.values.tolist()
     except FileNotFoundError:
         print(f"Error: CSV file not found at {file_path}")
