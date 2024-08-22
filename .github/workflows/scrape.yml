@@ -65,12 +65,6 @@ jobs:
           mkdir -p public
           mv output/*.csv public/
 
-      - name: Update Google Sheets
-        run: python update_sheets.py
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          SHEET_ID: ${{ secrets.SHEET_ID }}
-
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
@@ -78,3 +72,9 @@ jobs:
           git add public/*.csv
           git commit -m "[skip ci] Updated job data" || echo "No changes to commit"
           git push
+
+      - name: Trigger Update Google Sheets Workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.MEONG }}
+          event-type: update-sheets

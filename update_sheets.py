@@ -1,9 +1,13 @@
 import os
-import json
-import datetime
-import pandas as pd
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
+import sys
+
+try:
+    import pandas as pd
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+except ImportError as e:
+    print(f"Error: {e}. Please make sure all required packages are installed.")
+    sys.exit(1)
 
 # Set up credentials
 gcp_sa_key = os.environ.get('GCP_SA_KEY')
