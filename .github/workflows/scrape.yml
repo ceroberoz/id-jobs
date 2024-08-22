@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload CSV to Spreadsheet
         if: success()
-        uses: canonical-web-and-design/csv-to-google-spreadsheet@main
+        uses: canonical-web-and-design/csv-to-google-spreadsheet
         with:
           csv_path: public/merged.csv
           spreadsheet_id: ${{ secrets.GOOGLE_SHEET_ID }}
