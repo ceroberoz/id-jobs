@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -22,8 +22,9 @@ df = pd.read_csv(csv_file)
 # Convert DataFrame to list of lists
 values = [df.columns.tolist()] + df.values.tolist()
 
-# Sheet name
-sheet_name = 'Merged Jobs'
+# Generate sheet name with current date
+current_date = datetime.date.today().strftime("%Y-%m-%d")
+sheet_name = f"{current_date} - id-jobs"
 
 # Update or create sheet
 try:
