@@ -1,4 +1,4 @@
-ame: Scrape and Upload to Google Sheets
+name: Scrape and Upload to Google Sheets
 
 on:
   push:
