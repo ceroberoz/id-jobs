@@ -3,7 +3,6 @@
 [![Scrape and Upload to Google Sheets](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.15+](https://img.shields.io/badge/python-3.15+-blue.svg)](https://www.python.org/downloads/)
-![Last Updated](https://img.shields.io/github/last-commit/ceroberoz/id-jobs)
 ![Made with Scrapy](https://img.shields.io/badge/Made%20with-Scrapy-green.svg)
 ![Made with Playwright](https://img.shields.io/badge/Made%20with-Playwright-orange.svg)
 
