@@ -41,6 +41,14 @@ With all Indonesian job data in one place, you can:
 - Easy-to-use Google Sheets interface
 - Information from multiple job boards and company websites
 
+## Getting Started
+
+For a quick guide on how to use id-jobs, please refer to our [Quickstart Guide](QUICKSTART.md).
+
+## Frequently Asked Questions
+
+Have questions about id-jobs? Check out our [FAQ](FAQ.md) for answers to common queries.
+
 ## Legal Information
 
 id-jobs is open source under the GPL-3.0 license. You're free to use, modify, and share the code, as long as you keep it open source too.
