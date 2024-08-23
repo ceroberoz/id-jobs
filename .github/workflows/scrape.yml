@@ -5,9 +5,9 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
-  # Commenting out the schedule for testing purposes
-  # schedule:
-  #   - cron: "0 0 * * *"
+
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   adjust-column-widths:
@@ -26,23 +26,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pandas google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
-      # Commenting out non-relevant steps
-      # - name: Install Playwright browsers
-      #   run: playwright install --with-deps chromium firefox webkit
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium firefox webkit
 
-      # - name: Run scraping
-      #   env:
-      #     PYTHONUNBUFFERED: 1
-      #   run: |
-      #     chmod +x ./pipeline/scrape.sh
-      #     ./pipeline/scrape.sh
+      - name: Run scraping
+        env:
+          PYTHONUNBUFFERED: 1
+        run: |
+          chmod +x ./pipeline/scrape.sh
+          ./pipeline/scrape.sh
 
-      # - name: Upload to Google Sheets
-      #   env:
-      #     GCP_JSON: ${{ secrets.GCP_JSON }}
-      #     GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
-      #     PYTHONUNBUFFERED: 1
-      #   run: python pipeline/upload_to_sheets.py
+      - name: Upload to Google Sheets
+        env:
+          GCP_JSON: ${{ secrets.GCP_JSON }}
+          GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+          PYTHONUNBUFFERED: 1
+        run: python pipeline/upload_to_sheets.py
 
       - name: Adjust Column Widths
         env:
@@ -51,7 +50,7 @@ jobs:
           PYTHONUNBUFFERED: 1
         run: python pipeline/adjust_column_widths.py
 
-      # - name: Cleanup
-      #   if: always()
-      #   run: |
-      #     rm -rf output
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf output
