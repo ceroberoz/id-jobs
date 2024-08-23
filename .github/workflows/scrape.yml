@@ -1,15 +1,16 @@
-name: Scrape and Upload to Google Sheets
+name: Adjust Column Widths in Google Sheets
 
 on:
   push:
     branches: [master]
   pull_request:
     branches: [master]
-  schedule:
-    - cron: "0 0 * * *"
+  # Commenting out the schedule for testing purposes
+  # schedule:
+  #   - cron: "0 0 * * *"
 
 jobs:
-  scrape-and-upload:
+  adjust-column-widths:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,31 +26,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pandas google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
-      - name: Install Playwright browsers
-        run: playwright install --with-deps chromium firefox webkit
+      # Commenting out non-relevant steps
+      # - name: Install Playwright browsers
+      #   run: playwright install --with-deps chromium firefox webkit
 
-      - name: Run scraping
-        env:
-          PYTHONUNBUFFERED: 1
-        run: |
-          chmod +x ./scrape.sh
-          ./scrape.sh
+      # - name: Run scraping
+      #   env:
+      #     PYTHONUNBUFFERED: 1
+      #   run: |
+      #     chmod +x ./pipeline/scrape.sh
+      #     ./pipeline/scrape.sh
 
-      - name: Upload to Google Sheets
+      # - name: Upload to Google Sheets
+      #   env:
+      #     GCP_JSON: ${{ secrets.GCP_JSON }}
+      #     GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+      #     PYTHONUNBUFFERED: 1
+      #   run: python pipeline/upload_to_sheets.py
+
+      - name: Adjust Column Widths
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
           PYTHONUNBUFFERED: 1
-        run: python upload_to_sheets.py
+        run: python pipeline/adjust_column_widths.py
 
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: csv-files
-          path: public/*.csv
-          retention-days: 5
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -rf output public
+      # - name: Cleanup
+      #   if: always()
+      #   run: |
+      #     rm -rf output

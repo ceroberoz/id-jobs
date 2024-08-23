@@ -5,7 +5,7 @@ This guide provides instructions for setting up and running the id-jobs project 
 ## Prerequisites
 
 - Git
-- Python 3.15+
+- Python 3.12+
 
 ## Setup
 
