@@ -1,4 +1,3 @@
-# id-jobs: Your One-Stop Shop for Indonesian Job Market Data
 [![Scrape and Upload to Google Sheets](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
@@ -6,6 +5,9 @@
 ![GitHub stars](https://img.shields.io/github/stars/ceroberoz/id-jobs?style=social)
 ![Made with Scrapy](https://img.shields.io/badge/Made%20with-Scrapy-green.svg)
 ![Made with Playwright](https://img.shields.io/badge/Made%20with-Playwright-orange.svg)
+
+📊 **Google Sheets Output:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
+🐙 **GitHub Repository:** [https://github.com/ceroberoz/id-jobs](https://github.com/ceroberoz/id-jobs)
 
 id-jobs is a project that collects and organizes job listings from various Indonesian job boards and company websites. It's built with the help of open-source tools like Scrapy, Playwright, Pandas, GitHub Actions, and Google Sheets API. The development process is enhanced by using Zed as a text editor with Claude 3.5 Sonnet assistance.
 
