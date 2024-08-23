@@ -88,7 +88,6 @@ We welcome contributions from the community! Whether it's adding new features, f
 If you encounter any issues or have questions, please:
 1. Check our [FAQ](FAQ.md) for common questions and answers
 2. Open an issue on our GitHub repository
-3. Contact us at support@id-jobs.com
 
 ## License
 
