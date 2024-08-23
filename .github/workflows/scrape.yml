@@ -1,4 +1,4 @@
-name: Adjust Column Widths in Google Sheets
+name: Daily update to Google Sheets
 
 on:
   push:
