@@ -1,115 +1,65 @@
-# id-jobs: Your Magical Portal to Indonesian Job Market Data! 🧙‍♂️💼
+# id-jobs: Your One-Stop Shop for Indonesian Job Market Data
+[![Scrape and Upload to Google Sheets](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+![Last Updated](https://img.shields.io/github/last-commit/ceroberoz/id-jobs)
+![GitHub stars](https://img.shields.io/github/stars/ceroberoz/id-jobs?style=social)
+![Made with Scrapy](https://img.shields.io/badge/Made%20with-Scrapy-green.svg)
+![Made with Playwright](https://img.shields.io/badge/Made%20with-Playwright-orange.svg)
 
-Ahoy, job hunters, talent scouts, and data wizards! 🏴‍☠️ Welcome to id-jobs 2.0, the Swiss Army knife of Indonesian employment exploration. We've conjured up job listings from top companies and portals, all neatly arranged in a Google Sheet so tidy it would make Marie Kondo proud. Whether you're on a quest for your dream job, searching for the next unicorn employee, or just nosy about the job market (we won't judge), id-jobs is your crystal ball!
+id-jobs is a project that collects and organizes job listings from various Indonesian job boards and company websites. It's built with the help of open-source tools like Scrapy, Playwright, Pandas, GitHub Actions, and Google Sheets API. The development process is enhanced by using Zed as a text editor with Claude 3.5 Sonnet assistance.
 
-🔗 Peek into the future of jobs: [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
+## The Job Search Struggle
 
-[![built with Codeium](https://codeium.com/badges/main)](https://codeium.com)
-[![Run Scrapy Spiders](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
+Have you ever felt overwhelmed trying to find the perfect job? Scouring multiple websites, keeping track of different listings, and trying to compare salaries can be exhausting. id-jobs aims to solve this problem by bringing together job listings from various sources into one easy-to-access place.
 
-## What's cooking in id-jobs? 🍳
+## How id-jobs Works
 
-id-jobs is like a job-listing buffet - we've got a little bit of everything! We use Python and Scrapy (no actual spiders were harmed) to keep our data fresher than your morning coffee.
+id-jobs uses web scraping technology to collect job information from different websites. Web scraping is like having a robot assistant that visits websites and collects specific information for you. It's generally legal as long as it respects the website's terms of service and doesn't overload their servers.
 
-## Why id-jobs will be your new best friend ❤️
+Our scrapers collect data from popular job boards and company career pages, including:
+- Jobstreet
+- Glints
+- Kalibrr
+- And many more!
 
-- 🕒 Fresher than your ex's Instagram updates: We refresh DAILY at 00:00 UTC
-- 🌈 More comprehensive than your mom's Facebook stalking: Even more job sources in v2.0
-- 📊 More accurate than your fitness tracker's step count
-- 👩‍💻 So beginner-friendly, even your technophobe uncle could use it
+## Analyzing the Data
 
-## A tiny hiccup (or as we like to call it, a feature!) ⚠️
+Once the job data is collected, you can use it to gain insights into the job market. You can import the data into tools like Google Looker Studio, Metabase, or Tableau to create visualizations and dashboards. Even simple spreadsheet functions like pivot tables can help you analyze trends in job titles, salaries, or locations.
 
-Some of our spider friends are taking an unplanned vacation due to website changes. We're coaxing them back to work faster than you can say "You're on mute" in a Zoom call. Thanks for bearing with us!
+## Getting Started (for Beginners)
 
-## Who's this for? Everyone! But especially... 👥
+1. **Clone the repository:**
+   - Click the green "Code" button on this page
+   - Copy the URL
+   - Open your terminal or command prompt
+   - Type `git clone [paste URL here]` and press Enter
 
-- Job seekers tired of scrolling through countless irrelevant listings
-- Recruiters who want to be the Sherlock Holmes of the job market
-- Data nerds who get excited about pivot tables (we see you, and we appreciate you)
-- Coding newbies ready to level up from "Hello World" to "Hello Job Market"
+2. **Set up your environment:**
+   - Install Python from python.org if you haven't already
+   - In your terminal, navigate to the project folder
+   - Create a virtual environment: `python -m venv venv`
+   - Activate it:
+     - Windows: `venv\Scripts\activate`
+     - Mac/Linux: `source venv/bin/activate`
 
-## Get started faster than you can say "I quit"! 🚀
+3. **Install dependencies:**
+   - Run: `pip install -r requirements.txt`
+   - Then: `playwright install`
 
-### Optional: Install Python (if you haven't already)
+4. **Run a scraper:**
+   - To run a scraper and see the output in the terminal:
+     Type: `scrapy crawl [scraper name]` (e.g., `scrapy crawl jobstreet`)
+   - To generate a local CSV file with the scraped data:
+     Type: `scrapy crawl [scraper name] -o filename.csv -t csv`
+     (Replace `filename` with your desired name, e.g., `jobstreet_data.csv`)
 
-#### On Windows:
-1. Download Python from [python.org](https://www.python.org/downloads/windows/)
-2. Run the installer. Make sure to check "Add Python to PATH" during installation.
+## Work in Progress
 
-#### On macOS:
-1. Install Homebrew if you haven't:
-   ```
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
-2. Install Python:
-   ```
-   brew install python
-   ```
-
-#### On Linux (Ubuntu/Debian):
-```
-sudo apt-get update
-sudo apt-get install python3 python3-pip python3-venv
-```
-
-### Now, let's get id-jobs running!
-
-1. Clone the repo (it's like adopting a digital pet):
-   ```
-   git clone https://github.com/ceroberoz/id-jobs.git
-   cd id-jobs
-   ```
-
-2. Set up your environment (think of it as building a cozy home for your code):
-
-   On macOS and Linux:
-   ```
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-   On Windows:
-   ```
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-
-3. Install dependencies (like furnishing your code's new home):
-   ```
-   pip install -r requirements.txt
-   playwright install
-   ```
-
-4. Run your first job crawler (unleash the spiders!):
-   ```
-   scrapy crawl <crawler-name>
-   ```
-   Replace `<crawler-name>` with your chosen crawler (e.g., `vidio`, `gotogroup`)
-
-Don't worry if some of these terms sound like tech gibberish - you're learning! If you get stuck, there's a whole community of friendly coders ready to help. Happy job hunting! 🕷️🔍
-
-## Turn data into eye candy 📊
-
-Want to make charts so pretty they belong in a museum? Here's how:
-
-1. Download the Google Sheet as a CSV file.
-2. Import this CSV into tools like Google Looker Studio or Tableau.
-3. Create dashboards that would make even Edward Tufte jealous!
-
-## Learn more (because knowledge is power, and power is pizza) 📚
-
-- [Scrapy Documentation](https://docs.scrapy.org/en/latest/intro/overview.html) - Become the Spider-Man of web scraping
-- [Playwright Documentation](https://playwright.dev/docs/intro) - Master the art of puppet... err... browser mastery
-
-## A love letter to Indonesia 🇮🇩
-
-id-jobs is our way of showing some love to the Indonesian job market. It's like nasi goreng - uniquely Indonesian and universally loved!
+Please note that some job sources might be temporarily unavailable due to website changes. We're working on updating these as quickly as possible.
 
 ## License
 
-This project is shared under the GNU General Public License v3 (GPL-3.0). Let's spread job market data like gossip, but more useful! ❤️
+This project is licensed under the GNU General Public License v3 (GPL-3.0). This means you're free to use, modify, and distribute the code, as long as you keep it open source.
 
-If this project excites you more than a surprise bonus, don't forget to fork, star, and share!
-
-#OpenSource #DataScience #JobMarket #Indonesia #CodingForBeginners #GitHub
+(Side note: While web scraping is generally accepted, always make sure to review and respect each website's terms of service.)
