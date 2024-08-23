@@ -1,3 +1,5 @@
+# id-jobs: Your One-Stop Shop for Indonesian Job Market Data
+
 [![Scrape and Upload to Google Sheets](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml/badge.svg)](https://github.com/ceroberoz/id-jobs/actions/workflows/scrape.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
@@ -6,62 +8,67 @@
 ![Made with Scrapy](https://img.shields.io/badge/Made%20with-Scrapy-green.svg)
 ![Made with Playwright](https://img.shields.io/badge/Made%20with-Playwright-orange.svg)
 
-📊 **Google Sheets Output:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
-🐙 **GitHub Repository:** [https://github.com/ceroberoz/id-jobs](https://github.com/ceroberoz/id-jobs)
+📊 **View Job Data:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
 
-id-jobs is a project that collects and organizes job listings from various Indonesian job boards and company websites. It's built with the help of open-source tools like Scrapy, Playwright, Pandas, GitHub Actions, and Google Sheets API. The development process is enhanced by using Zed as a text editor with Claude 3.5 Sonnet assistance.
+id-jobs brings together job listings from various Indonesian job boards and company websites into one easy-to-access Google Sheet. We use open-source tools like Scrapy, Playwright, Pandas, and GitHub Actions to collect and organize this data daily.
 
-## The Job Search Struggle
+🇮🇩 **Important:** id-jobs is specifically designed for the Indonesian job market.
 
-Have you ever felt overwhelmed trying to find the perfect job? Scouring multiple websites, keeping track of different listings, and trying to compare salaries can be exhausting. id-jobs aims to solve this problem by bringing together job listings from various sources into one easy-to-access place.
+## Why id-jobs?
 
-## How id-jobs Works
+Finding the perfect job in Indonesia can be overwhelming. Jumping between multiple websites, tracking different listings, and comparing salaries is time-consuming. id-jobs simplifies this process by gathering job information from various Indonesian sources into one place.
 
-id-jobs uses web scraping technology to collect job information from different websites. Web scraping is like having a robot assistant that visits websites and collects specific information for you. It's generally legal as long as it respects the website's terms of service and doesn't overload their servers.
+## How it Works
 
-Our scrapers collect data from popular job boards and company career pages, including:
-- Jobstreet
-- Glints
+Think of id-jobs as your personal job-hunting assistant for the Indonesian market. It visits local job websites, collects relevant information, and organizes it all in one spreadsheet. This process, called web scraping, is done respectfully and in line with each website's terms of service.
+
+We currently collect data from Indonesian job boards and company sites, including:
+- Jobstreet Indonesia
+- Glints Indonesia
 - Kalibrr
-- And many more!
+- And more local sources!
 
-## Analyzing the Data
+## Making Sense of the Data
 
-Once the job data is collected, you can use it to gain insights into the job market. You can import the data into tools like Google Looker Studio, Metabase, or Tableau to create visualizations and dashboards. Even simple spreadsheet functions like pivot tables can help you analyze trends in job titles, salaries, or locations.
+With all this Indonesian job data in one place, you can:
+- Spot trends in job titles, salaries, or locations across Indonesia
+- Create visual charts and graphs using tools like Google Looker Studio or Tableau
+- Use spreadsheet functions to filter and analyze the Indonesian job market
 
-## Getting Started (for Beginners)
+## Get Involved (for Beginners)
 
-1. **Clone the repository:**
-   - Click the green "Code" button on this page
-   - Copy the URL
-   - Open your terminal or command prompt
+Want to run the scrapers yourself or contribute to the project? Here's how to get started:
+
+1. **Copy the project to your computer:**
+   - Go to the [GitHub page](https://github.com/ceroberoz/id-jobs)
+   - Click the green "Code" button and copy the URL
+   - Open your computer's terminal
    - Type `git clone [paste URL here]` and press Enter
 
-2. **Set up your environment:**
-   - Install Python from python.org if you haven't already
-   - In your terminal, navigate to the project folder
+2. **Set up your workspace:**
+   - Install Python from python.org
+   - In the terminal, go to the project folder
    - Create a virtual environment: `python -m venv venv`
    - Activate it:
      - Windows: `venv\Scripts\activate`
      - Mac/Linux: `source venv/bin/activate`
 
-3. **Install dependencies:**
+3. **Install necessary tools:**
    - Run: `pip install -r requirements.txt`
    - Then: `playwright install`
 
 4. **Run a scraper:**
-   - To run a scraper and see the output in the terminal:
-     Type: `scrapy crawl [scraper name]` (e.g., `scrapy crawl jobstreet`)
-   - To generate a local CSV file with the scraped data:
-     Type: `scrapy crawl [scraper name] -o filename.csv -t csv`
-     (Replace `filename` with your desired name, e.g., `jobstreet_data.csv`)
+   - To see results in the terminal:
+     `scrapy crawl [scraper name]` (e.g., `scrapy crawl jobstreet`)
+   - To save results to a file:
+     `scrapy crawl [scraper name] -o filename.csv -t csv`
 
 ## Work in Progress
 
-Please note that some job sources might be temporarily unavailable due to website changes. We're working on updating these as quickly as possible.
+Some job sources might be temporarily unavailable as websites change. We're continuously updating our scrapers to keep the data flowing.
 
 ## License
 
-This project is licensed under the GNU General Public License v3 (GPL-3.0). This means you're free to use, modify, and distribute the code, as long as you keep it open source.
+id-jobs is open source under the GNU General Public License v3 (GPL-3.0). You're free to use, modify, and share the code, as long as you keep it open source too.
 
-(Side note: While web scraping is generally accepted, always make sure to review and respect each website's terms of service.)
+Remember: Always respect website terms of service when scraping!
