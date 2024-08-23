@@ -34,21 +34,65 @@ With all this Indonesian job data at your fingertips, you can:
 - Create charts so beautiful, they'll make Excel jealous
 - Use spreadsheet functions to analyze the job market (Warning: May cause unexpected bouts of "I love data!")
 
-## Get Involved (for Beginners and Brave Souls)
+## Get Involved (for Brave Beginners and Curious Coders)
 
-Want to join our merry band of scraper-wielding job-data enthusiasts? Here's how:
+Ready to dip your toes into the exciting world of web scraping? Don't worry, we won't throw you into the deep end without a floatie! Here's how to get started:
 
-1. **Copy the project to your computer:**
-   - It's like adopting a digital pet, but less needy
+1. **Clone the project:**
+   - Think of this as making a copy of our digital treasure map.
+   - Visit the [GitHub page](https://github.com/ceroberoz/id-jobs)
+   - Click the green "Code" button and copy the URL
+   - Open your computer's terminal (Don't panic! It's just a text-based adventure game)
+   - Type `git clone [paste URL here]` and press Enter
+   - Congratulations! You've just performed your first tech heist (legally, of course)
 
-2. **Set up your workspace:**
-   - Create a virtual environment (It's like a fort for your code!)
+2. **Set up your Python playground:**
+   - Install Python from python.org (It's like LEGO for grown-ups)
+   - In the terminal, navigate to the project folder:
+     ```
+     cd id-jobs
+     ```
+   - Create a virtual environment (It's like a sandbox, but without the cats):
+     ```
+     python -m venv venv
+     ```
+   - Activate your new digital fort:
+     - Windows: `venv\Scripts\activate`
+     - Mac/Linux: `source venv/bin/activate`
+   - You're now in a magical realm where code reigns supreme!
 
-3. **Install necessary tools:**
-   - `pip install -r requirements.txt` (Collect them all!)
+3. **Summon the necessary tools:**
+   - Install required packages:
+     ```
+     pip install -r requirements.txt
+     ```
+   - Install Playwright (our robotic browser puppet):
+     ```
+     playwright install
+     ```
+   - You're now armed with everything you need to conquer the job data world!
 
-4. **Run a scraper:**
-   - Watch in awe as job data flows like poetry... or at least structured data
+4. **Run your first scraper:**
+   - To see results appear like magic in your terminal:
+     ```
+     scrapy crawl jobstreet
+     ```
+   - To capture your prey (data) in a file:
+     ```
+     scrapy crawl jobstreet -o jobstreet_jobs.csv -t csv
+     ```
+   - Watch in awe as job listings materialize before your very eyes!
+
+5. **Experiment and explore:**
+   - Try different scrapers by replacing 'jobstreet' with other scraper names
+   - Modify the scrapers in the `spiders` folder (Caution: Here be dragons... and exciting possibilities!)
+   - Break things, fix things, learn things – it's all part of the coding adventure!
+
+Remember, every master coder started as a beginner. So don't be afraid to make mistakes – they're just plot twists in your coding journey!
+
+Need help? Feel free to open an issue on GitHub. We promise not to laugh... too hard. 😉
+
+Now go forth and scrape responsibly, young data padawan!
 
 ## Work in Progress
 
