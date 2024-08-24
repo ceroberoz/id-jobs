@@ -63,7 +63,7 @@ pip install -r requirements.txt
 
 ## Troubleshooting
 
-- Ensure Python 3.15+ is installed: `python --version`
+- Ensure Python 3.12+ is installed: `python --version`
 - For issues, check GitHub issues or report a new one
 
 ## Responsible Scraping

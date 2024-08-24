@@ -20,6 +20,7 @@ def adjust_column_widths(spreadsheet_id):
     service = build("sheets", "v4", credentials=creds)
 
     column_widths = {
+        'company': 467,  # Move this to the first position
         'job_title': 684,
         'job_location': 255,
         'job_department': 548,
@@ -32,7 +33,6 @@ def adjust_column_widths(spreadsheet_id):
         'last_seen': 170,
         'is_active': 63,
         'company': 467,
-        'company_url': 646,
         'job_board': 72,
         'job_board_url': 213
     }

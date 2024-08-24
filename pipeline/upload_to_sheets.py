@@ -40,6 +40,10 @@ def setup_credentials():
 def read_csv(file_path):
     try:
         df = pd.read_csv(file_path)
+        # Reorder columns to move 'company' to the first position
+        columns = df.columns.tolist()
+        columns.insert(0, columns.pop(columns.index('company')))
+        df = df[columns]
         # Replace NaN values with empty strings
         df = df.fillna('')
         # Convert all values to strings and strip whitespace
