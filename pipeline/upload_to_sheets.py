@@ -39,8 +39,10 @@ def setup_credentials():
 
 def read_csv(file_path):
     try:
-        df = pd.read_csv(file_path)
-        # Reorder columns to move 'company' to the first position and 'job_type' after 'job_title'
+        # Specify dtype for job_type column to ensure it's always treated as string
+        df = pd.read_csv(file_path, dtype={'job_type': str})
+
+        # Rest of the function remains the same
         columns = df.columns.tolist()
         columns.insert(0, columns.pop(columns.index('company')))
         job_type_index = columns.index('job_type')
@@ -170,6 +172,12 @@ def main():
         upload_to_sheets(service, spreadsheet_id, cleaned_content)
 
 def sanitize_job_type(job_type):
+    if pd.isna(job_type):
+        return ''  # or return a default value like 'Unknown'
+
+    # Convert to string if it's not already
+    job_type = str(job_type)
+
     # Replace commas with ' & '
     job_type = job_type.replace(',', ' & ')
 
