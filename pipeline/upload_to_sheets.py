@@ -47,6 +47,10 @@ def read_csv(file_path):
         job_title_index = columns.index('job_title')
         columns.insert(job_title_index + 1, columns.pop(job_type_index))
         df = df[columns]
+
+        # Sanitize job_type column
+        df['job_type'] = df['job_type'].apply(sanitize_job_type)
+
         # Replace NaN values with empty strings
         df = df.fillna('')
         # Convert all values to strings and strip whitespace
@@ -164,6 +168,33 @@ def main():
 
     with get_sheets_service(creds) as service:
         upload_to_sheets(service, spreadsheet_id, cleaned_content)
+
+def sanitize_job_type(job_type):
+    # Replace commas with ' & '
+    job_type = job_type.replace(',', ' & ')
+
+    # Define mappings
+    contract_types = {'contract', 'contract & fullTime', 'Contractual', 'Kontrak'}
+    freelance_types = {'freelance'}
+    part_time_types = {'Part time', 'partTime', 'Paruh waktu'}
+    full_time_types = {'Full Time', 'fullTime', 'fullTime & Contract', 'fullTime & freelance'}
+    internship_types = {'Intern', 'internship'}
+
+    # Check and replace values
+    job_type_lower = job_type.lower()
+
+    if any(t.lower() in job_type_lower for t in contract_types):
+        return 'Contract'
+    elif any(t.lower() in job_type_lower for t in freelance_types):
+        return 'Freelance'
+    elif any(t.lower() in job_type_lower for t in part_time_types):
+        return 'Part time'
+    elif any(t.lower() in job_type_lower for t in full_time_types):
+        return 'Full time'
+    elif any(t.lower() in job_type_lower for t in internship_types):
+        return 'Internship'
+    else:
+        return job_type  # Return as is if not matching any criteria
 
 if __name__ == "__main__":
     main()
