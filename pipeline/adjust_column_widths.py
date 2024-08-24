@@ -22,12 +22,12 @@ def adjust_column_widths(spreadsheet_id):
     column_widths = {
         'company': 467,  # Move this to the first position
         'job_title': 684,
+        'job_type': 112,  # Moved after job_title
         'job_location': 255,
         'job_department': 548,
         'job_url': 662,
         'first_seen': 130,
         'base_salary': 304,
-        'job_type': 112,
         'job_level': 64,
         'job_apply_end_date': 225,
         'last_seen': 170,

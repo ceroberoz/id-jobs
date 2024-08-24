@@ -40,9 +40,12 @@ def setup_credentials():
 def read_csv(file_path):
     try:
         df = pd.read_csv(file_path)
-        # Reorder columns to move 'company' to the first position
+        # Reorder columns to move 'company' to the first position and 'job_type' after 'job_title'
         columns = df.columns.tolist()
         columns.insert(0, columns.pop(columns.index('company')))
+        job_type_index = columns.index('job_type')
+        job_title_index = columns.index('job_title')
+        columns.insert(job_title_index + 1, columns.pop(job_type_index))
         df = df[columns]
         # Replace NaN values with empty strings
         df = df.fillna('')
