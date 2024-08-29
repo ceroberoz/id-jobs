@@ -2,64 +2,46 @@
 
 set -euo pipefail
 
-# Load configuration
-source ./config.sh
+# Set the directory paths
+spider_dir="./freya/spiders"
+output_dir="./output"
+merged_file="$output_dir/merged.csv"
 
-# Array of spiders to exclude
-EXCLUDE_SPIDERS=("goto")
+# Create output directory if it doesn't exist
+mkdir -p "$output_dir"
 
-# Function for logging
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
-}
+# Empty the merged.csv file or create a new empty file
+> "$merged_file"
+echo "Emptied or created merged.csv file."
 
-# Function to run a spider
-run_spider() {
-    spider=$1
-    output_file="$OUTPUT_DIR/${spider}.csv"
-    log "Processing $spider..."
-    if ! scrapy crawl "$spider" -o "$output_file" -t csv; then
-        log "Error: Failed to process $spider"
-        return 1
-    fi
-    return 0
-}
+# Initialize the merged file with the header
+echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url" > "$merged_file"
 
-# Main execution
-main() {
-    mkdir -p "$OUTPUT_DIR"
-    > "$MERGED_FILE"
-    log "Emptied or created merged.csv file."
+# Process spider files
+found_files=false
+for spider_file in "$spider_dir"/*.py; do
+    filename=$(basename "$spider_file" .py)
 
-    echo "$HEADER" > "$MERGED_FILE"
-
-    found_files=false
-    for spider_file in "$SPIDER_DIR"/*.py; do
-        filename=$(basename "$spider_file" .py)
-        [[ "$filename" == "__init__" ]] && continue
-
-        # Check if the spider is in the exclusion list
-        if [[ " ${EXCLUDE_SPIDERS[@]} " =~ " ${filename} " ]]; then
-            log "Skipping excluded spider: $filename"
-            continue
-        fi
-
-        if [[ -f "$spider_file" ]]; then
-            if run_spider "$filename"; then
-                tail -n +2 "$OUTPUT_DIR/${filename}.csv" >> "$MERGED_FILE"
-                found_files=true
-            fi
-        fi
-    done
-
-    if $found_files; then
-        log "Merged CSV file updated: $MERGED_FILE"
-    else
-        log "No output files found to merge."
+    # Skip __init__.py file
+    if [[ "$filename" == "__init__" ]]; then
+        continue
     fi
 
-    # Cleanup
-    rm -f "$OUTPUT_DIR"/*.csv
-}
+    if [[ -f "$spider_file" ]]; then
+        output_file="$output_dir/${filename}.csv"
 
-main "$@"
+        echo "Processing $filename..."
+        scrapy crawl "$filename" -o "$output_file" -t csv
+
+        if [[ -f "$output_file" ]]; then
+            tail -n +2 "$output_file" >> "$merged_file"
+            found_files=true
+        fi
+    fi
+done
+
+if $found_files; then
+    echo "Merged CSV file updated: $merged_file"
+else
+    echo "No output files found to merge."
+fi

@@ -1,6 +1,7 @@
 # Add custom
 output
 .pip_cache
+simulate_workflow.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

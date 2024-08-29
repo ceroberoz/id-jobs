@@ -5,11 +5,12 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+
   schedule:
     - cron: "0 0 * * *"
 
 jobs:
-  scrape-and-update:
+  adjust-column-widths:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,48 +19,38 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
-
-      - name: Cache pip packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt pandas google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
 
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium firefox webkit
 
       - name: Run scraping
+        env:
+          PYTHONUNBUFFERED: 1
         run: |
           chmod +x ./pipeline/scrape.sh
           ./pipeline/scrape.sh
-        env:
-          PYTHONUNBUFFERED: 1
-
-      - name: Upload merged CSV
-        uses: actions/upload-artifact@v3
-        with:
-          name: jobs-data
-          path: output/*.csv
 
       - name: Upload to Google Sheets
-        run: python pipeline/upload_to_sheets.py
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+          PYTHONUNBUFFERED: 1
+        run: python pipeline/upload_to_sheets.py
 
       - name: Adjust Column Widths
-        run: python pipeline/adjust_column_widths.py
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+          PYTHONUNBUFFERED: 1
+        run: python pipeline/adjust_column_widths.py
 
       - name: Cleanup
         if: always()
-        run: rm -rf output
+        run: |
+          rm -rf output
