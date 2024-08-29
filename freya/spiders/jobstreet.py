@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-from typing_extensions import Optional
 import scrapy
 import json
 from datetime import datetime
 import random
 import urllib.parse
 import time
-import uuid
+from typing import Dict, Any, List
 from scrapy.utils.project import get_project_settings
+import uuid
 
 def clean_string(text):
     if not isinstance(text, str):
@@ -22,51 +21,56 @@ def generate_random_query_id():
 
 class JobstreetSpider(scrapy.Spider):
     name = 'jobstreet'
-    base_url = 'https://id.jobstreet.com/api/chalice-search/v4/search'
+    BASE_URL = 'https://id.jobstreet.com/api/chalice-search/v4/search'
+    MAX_PAGES = 1000
+    JOBS_PER_PAGE = 30
 
     def __init__(self, *args, **kwargs):
         super(JobstreetSpider, self).__init__(*args, **kwargs)
-        self.user_agents = [
+        self.settings = get_project_settings()
+        self.user_agents = self.settings.get('USER_AGENTS', [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
-        ]
-        self.settings = get_project_settings()
+        ])
 
     def start_requests(self):
         concurrent_requests = self.settings.getint('CONCURRENT_REQUESTS', 16)
         download_delay = self.settings.getfloat('DOWNLOAD_DELAY', 0.25)
 
-        for page in range(1, 1001):  # Crawl up to page 1000
-            user_id = generate_random_id()
-            params = {
-                'siteKey': 'ID-Main',
-                'sourcesystem': 'houston',
-                'userqueryid': generate_random_query_id(),
-                'userid': user_id,
-                'usersessionid': user_id,
-                'eventCaptureSessionId': user_id,
-                'page': str(page),
-                'seekSelectAllPages': 'true',
-                'sortmode': 'ListedDate',
-                'pageSize': '30',
-                'include': 'seodata',
-                'locale': 'id-ID',
-                'solId': generate_random_id()
-            }
-
+        for page in range(1, self.MAX_PAGES + 1):
+            params = self.get_request_params(page)
             headers = self.get_headers()
 
             yield scrapy.Request(
-                url=f"{self.base_url}?{urllib.parse.urlencode(params)}",
+                url=f"{self.BASE_URL}?{urllib.parse.urlencode(params)}",
                 headers=headers,
                 callback=self.parse,
-                meta={'download_delay': download_delay}
+                meta={'page': page, 'download_delay': download_delay},
+                errback=self.errback_httpbin
             )
 
-    def get_headers(self):
+    def get_request_params(self, page: int) -> Dict[str, str]:
+        user_id = generate_random_id()
+        return {
+            'siteKey': 'ID-Main',
+            'sourcesystem': 'houston',
+            'userqueryid': generate_random_query_id(),
+            'userid': user_id,
+            'usersessionid': user_id,
+            'eventCaptureSessionId': user_id,
+            'page': str(page),
+            'seekSelectAllPages': 'true',
+            'sortmode': 'ListedDate',
+            'pageSize': str(self.JOBS_PER_PAGE),
+            'include': 'seodata',
+            'locale': 'id-ID',
+            'solId': generate_random_id()
+        }
+
+    def get_headers(self) -> Dict[str, str]:
         return {
             'accept': 'application/json, text/plain, */*',
             'accept-language': 'en-US,en;q=0.9',
@@ -92,6 +96,10 @@ class JobstreetSpider(scrapy.Spider):
             data = json.loads(response.text)
             jobs = data.get('data', [])
 
+            if not jobs:
+                self.logger.info(f"No more jobs found on page {response.meta['page']}. Stopping crawl.")
+                return
+
             for job in jobs:
                 yield self.parse_job(job)
 
@@ -99,11 +107,11 @@ class JobstreetSpider(scrapy.Spider):
             time.sleep(response.meta['download_delay'] + random.uniform(0.5, 1.5))
 
         except json.JSONDecodeError as e:
-            self.logger.error(f"Error decoding JSON: {e}")
+            self.logger.error(f"Error decoding JSON on page {response.meta['page']}: {e}")
         except Exception as e:
-            self.logger.error(f"Unexpected error: {e}")
+            self.logger.error(f"Unexpected error on page {response.meta['page']}: {e}")
 
-    def parse_job(self, job):
+    def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'job_title': clean_string(job.get('title', '')),
             'job_location': clean_string(job.get('jobLocation', {}).get('label', '')),
@@ -120,13 +128,7 @@ class JobstreetSpider(scrapy.Spider):
             'company_url': '',
             'job_board': 'Jobstreet',
             'job_board_url': 'https://id.jobstreet.com/'
-
-            # Optional
-            # 'job_description': clean_string(job.get('teaser', '')),
-            # 'advertiser_id': clean_string(job.get('advertiser', {}).get('id', '')),
-            # 'job_id': clean_string(job.get('id', '')),
-            # 'list_date': clean_string(job.get('listingDateDisplay', '')),
-            # 'work_arrangements': clean_string(', '.join([arr.get('label', '') for arr in job.get('workArrangements', {}).get('data', [])])),
-            # 'is_premium': job.get('isPremium', False),
-            # 'is_stand_out': job.get('isStandOut', False),
         }
+
+    def errback_httpbin(self, failure):
+        self.logger.error(f"HTTP Error: {failure}")

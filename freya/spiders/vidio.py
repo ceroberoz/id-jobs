@@ -1,48 +1,58 @@
-# -*- coding: utf-8 -*-
 import scrapy
+import logging
 from datetime import datetime
+from typing import Dict, Any, Optional
 
+logger = logging.getLogger(__name__)
 
 class VidioSpiderXPath(scrapy.Spider):
-    name = 'vidio' #xpath
-    base_url = 'https://careers.vidio.com'
+    name = 'vidio'
+    BASE_URL = 'https://careers.vidio.com'
+    CAREERS_URL = f"{BASE_URL}/careers"
 
-    # Get timestamp in human readable format
-    now = datetime.now()
-    timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     def start_requests(self):
-        # GET request
-        yield scrapy.Request(self.base_url+"/careers", meta={"playwright": True})
+        yield scrapy.Request(self.CAREERS_URL, meta={"playwright": True}, callback=self.parse)
 
     def parse(self, response):
-        for selector in response.xpath('//div[contains(@class, "b-job")]/a'):
-            yield {
-                'job_title': selector.css('.b-job__name::text').get(),
-                'job_location': selector.css('.b-job__location::text').get(),
-                'job_department': selector.css('.b-job__department::text').get(),
-                'job_url': self.base_url+selector.css('a::attr(href)').get(),
-                'first_seen': self.timestamp, # timestamp job added
+        try:
+            for selector in response.xpath('//div[contains(@class, "b-job")]/a'):
+                yield self.parse_job(selector)
 
-                # Add job metadata
-                'base_salary': 'N/A', # salary of job
-                'job_type': 'N/A', # type of job, full-time, part-time, intern, remote
-                'job_level': 'N/A', # level of job, entry, mid, senior
-                'job_apply_end_date': 'N/A', # end date of job
-                'last_seen': '', # timestamp job last seen
-                'is_active': 'True', # job is still active, True or False
+            self.handle_pagination(response)
+        except Exception as e:
+            logger.error(f"Error parsing page: {e}")
 
-                # Add company metadata
-                'company': 'Vidio', # company name
-                'company_url': self.base_url, # company url
+    def parse_job(self, selector) -> Dict[str, Any]:
+        return {
+            'job_title': self.sanitize_string(selector.css('.b-job__name::text').get()),
+            'job_location': self.sanitize_string(selector.css('.b-job__location::text').get()),
+            'job_department': self.sanitize_string(selector.css('.b-job__department::text').get()),
+            'job_url': self.get_job_url(selector),
+            'first_seen': self.timestamp,
+            'base_salary': 'N/A',
+            'job_type': 'N/A',
+            'job_level': 'N/A',
+            'job_apply_end_date': 'N/A',
+            'last_seen': '',
+            'is_active': 'True',
+            'company': 'Vidio',
+            'company_url': self.BASE_URL,
+            'job_board': 'N/A',
+            'job_board_url': 'N/A'
+        }
 
-                # Add job board metadata
-                'job_board': 'N/A', # name of job board
-                'job_board_url': 'N/A' # url of job board
+    def get_job_url(self, selector) -> str:
+        return self.BASE_URL + selector.css('a::attr(href)').get()
 
-            }
+    @staticmethod
+    def sanitize_string(s: Optional[str]) -> str:
+        return s.strip() if s else 'N/A'
 
-        # Go to next page, if applicable
-        # next_page_url = response.xpath('//li[@class="next"]/a/@href').extract_first()
-        # if next_page_url is not None:
-        #     yield scrapy.Request(response.urljoin(next_page_url))
+    def handle_pagination(self, response):
+        next_page_url = response.xpath('//li[@class="next"]/a/@href').get()
+        if next_page_url:
+            yield scrapy.Request(response.urljoin(next_page_url), callback=self.parse)

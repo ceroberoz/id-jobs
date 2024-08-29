@@ -2,46 +2,64 @@
 
 set -euo pipefail
 
-# Set the directory paths
-spider_dir="./freya/spiders"
-output_dir="./output"
-merged_file="$output_dir/merged.csv"
+# Load configuration
+source ./config.sh
 
-# Create output directory if it doesn't exist
-mkdir -p "$output_dir"
+# Array of spiders to exclude
+EXCLUDE_SPIDERS=("goto")
 
-# Empty the merged.csv file or create a new empty file
-> "$merged_file"
-echo "Emptied or created merged.csv file."
+# Function for logging
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
 
-# Initialize the merged file with the header
-echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url" > "$merged_file"
-
-# Process spider files
-found_files=false
-for spider_file in "$spider_dir"/*.py; do
-    filename=$(basename "$spider_file" .py)
-
-    # Skip __init__.py file
-    if [[ "$filename" == "__init__" ]]; then
-        continue
+# Function to run a spider
+run_spider() {
+    spider=$1
+    output_file="$OUTPUT_DIR/${spider}.csv"
+    log "Processing $spider..."
+    if ! scrapy crawl "$spider" -o "$output_file" -t csv; then
+        log "Error: Failed to process $spider"
+        return 1
     fi
+    return 0
+}
 
-    if [[ -f "$spider_file" ]]; then
-        output_file="$output_dir/${filename}.csv"
+# Main execution
+main() {
+    mkdir -p "$OUTPUT_DIR"
+    > "$MERGED_FILE"
+    log "Emptied or created merged.csv file."
 
-        echo "Processing $filename..."
-        scrapy crawl "$filename" -o "$output_file" -t csv
+    echo "$HEADER" > "$MERGED_FILE"
 
-        if [[ -f "$output_file" ]]; then
-            tail -n +2 "$output_file" >> "$merged_file"
-            found_files=true
+    found_files=false
+    for spider_file in "$SPIDER_DIR"/*.py; do
+        filename=$(basename "$spider_file" .py)
+        [[ "$filename" == "__init__" ]] && continue
+
+        # Check if the spider is in the exclusion list
+        if [[ " ${EXCLUDE_SPIDERS[@]} " =~ " ${filename} " ]]; then
+            log "Skipping excluded spider: $filename"
+            continue
         fi
-    fi
-done
 
-if $found_files; then
-    echo "Merged CSV file updated: $merged_file"
-else
-    echo "No output files found to merge."
-fi
+        if [[ -f "$spider_file" ]]; then
+            if run_spider "$filename"; then
+                tail -n +2 "$OUTPUT_DIR/${filename}.csv" >> "$MERGED_FILE"
+                found_files=true
+            fi
+        fi
+    done
+
+    if $found_files; then
+        log "Merged CSV file updated: $MERGED_FILE"
+    else
+        log "No output files found to merge."
+    fi
+
+    # Cleanup
+    rm -f "$OUTPUT_DIR"/*.csv
+}
+
+main "$@"

@@ -1,73 +1,100 @@
 import scrapy
 import json
 from datetime import datetime
+import logging
+from typing import Dict, Any, Optional
+import random
+
+logger = logging.getLogger(__name__)
 
 class BlibliSpiderJson(scrapy.Spider):
     name = 'blibli'
-    base_url = 'https://careers.blibli.com/ext/api/job/list.json?format=COMPLETE&groupBy=true'
+    BASE_URL = 'https://careers.blibli.com'
+    API_URL = f'{BASE_URL}/ext/api/job/list?format=COMPLETE&groupBy=true'
+    JOB_URL_TEMPLATE = f'{BASE_URL}/job-detail/{{}}?job={{}}'
 
-    # Get timestamp in human readable format
-    now = datetime.now()
-    timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
+    USER_AGENTS = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     def start_requests(self):
         headers = {
-            'Content-Type': 'application/json'
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'no-cache',
+            'dnt': '1',
+            'pragma': 'no-cache',
+            'priority': 'u=1, i',
+            'referer': 'https://careers.blibli.com/department/all-departments?experience=&employmentType=',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'sec-gpc': '1',
+            'user-agent': random.choice(self.USER_AGENTS)
         }
-
-        # GET request, remove Playwright as it cause breaking in JSON parsing
-        yield scrapy.Request(self.base_url, headers=headers)
+        yield scrapy.Request(self.API_URL, headers=headers, callback=self.parse)
 
     def parse(self, response):
         try:
             data = json.loads(response.text)
             jobs = data['responseObject']
 
-            for selector in jobs:
-
-                for job in selector['jobs']:
-
-                    # Create URL with format https://careers.blibli.com/job-detail/junior-engineer-officer?job=f1f4505d-27ef-469e-a9d5-de6d6e199aee
-                    url_path_job_title = job['title'].lower().replace(' ', '-')
-                    url_path_job_id = job['id']
-
-                    # Merge url_path_job_title and url_path_job_id to url format https://careers.blibli.com/job-detail/{url_path_job_title}?job={url_path_job_id}
-                    url = f"https://careers.blibli.com/job-detail/{url_path_job_title}?job={url_path_job_id}"
-
-                    # Check if job['employmentType'] is exists
-                    employment_type = job['employmentType'].replace("Ph-", "").replace("-", " ").capitalize() if 'employmentType' in job else 'N/A'
-
-                    # Check if job['experience'] is exists
-                    experience = job['experience'] if 'experience' in job else 'N/A'
-
-                    # Check if job['location'] is exists
-                    location = job['location'] if 'location' in job else 'N/A'
-
-                    yield {
-                        'job_title': job['title'],
-                        'job_location': location,
-                        'job_department': job['departmentName'],
-                        'job_url': url ,
-                        'first_seen': self.timestamp, # timestamp job added
-
-                        # Add job metadata
-                        'base_salary': 'N/A', # salary of job
-                        'job_type': employment_type, # type of job, full-time, part-time, intern, remote
-                        'job_level': experience, # level of job, entry, mid, senior
-                        'job_apply_end_date': 'N/A', # end date of job
-                        'last_seen': '', # timestamp job last seen
-                        'is_active': 'True', # job is still active, True or False
-
-                        # Add company metadata
-                        'company': 'Blibli', # company name
-                        'company_url': 'https://careers.blibli.com/', #company url
-
-                        # Add job board metadata
-                        'job_board': 'N/A', # name of job board
-                        'job_board_url': 'N/A' # url of job board
-                    }
+            for job_group in jobs:
+                for job in job_group['jobs']:
+                    yield self.parse_job(job)
 
         except json.JSONDecodeError as e:
-            # Handle JSON decoding errors
-            self.logger.error(f"Error decoding JSON: {e}")
-            self.logger.debug(f"Response content: {response.text}")
+            logger.error(f"Error decoding JSON: {e}")
+            logger.debug(f"Response content: {response.text}")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+
+    def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            'job_title': self.sanitize_string(job.get('title')),
+            'job_location': self.sanitize_string(job.get('location')),
+            'job_department': self.sanitize_string(job.get('departmentName')),
+            'job_url': self.get_job_url(job),
+            'first_seen': self.timestamp,
+            'base_salary': 'N/A',
+            'job_type': self.get_employment_type(job),
+            'job_level': self.sanitize_string(job.get('experience')),
+            'job_apply_end_date': 'N/A',
+            'last_seen': self.format_unix_time(job.get('createdDate')),
+            'is_active': 'True',
+            'company': 'Blibli',
+            'company_url': self.BASE_URL,
+            'job_board': 'N/A',
+            'job_board_url': 'N/A'
+        }
+
+    def get_job_url(self, job: Dict[str, Any]) -> str:
+        job_title = job.get('title', '').lower().replace(' ', '-')
+        job_id = job.get('id', '')
+        return self.JOB_URL_TEMPLATE.format(job_title, job_id)
+
+    @staticmethod
+    def get_employment_type(job: Dict[str, Any]) -> str:
+        employment_type = job.get('employmentType', '')
+        return employment_type.replace("Ph-", "").replace("-", " ").capitalize() if employment_type else 'N/A'
+
+    @staticmethod
+    def sanitize_string(s: Optional[str]) -> str:
+        return s.strip() if s else 'N/A'
+
+    @staticmethod
+    def format_unix_time(unix_time: Optional[int]) -> str:
+        if unix_time is None:
+            return 'N/A'
+        try:
+            return datetime.fromtimestamp(unix_time / 1000).strftime('%Y-%m-%d %H:%M:%S')
+        except (ValueError, TypeError):
+            return 'N/A'

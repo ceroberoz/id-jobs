@@ -1,9 +1,15 @@
 import os
 import json
+import logging
+from typing import Dict, List
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
-def get_env_var(var_name):
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def get_env_var(var_name: str) -> str:
     value = os.environ.get(var_name)
     if not value:
         raise ValueError(f"{var_name} environment variable is not set or is empty")
@@ -11,18 +17,19 @@ def get_env_var(var_name):
 
 def setup_credentials():
     gcp_json = get_env_var('GCP_JSON')
-    creds_dict = json.loads(gcp_json)
-    return service_account.Credentials.from_service_account_info(
-        creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    try:
+        creds_dict = json.loads(gcp_json)
+        return service_account.Credentials.from_service_account_info(
+            creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON in GCP_JSON environment variable")
+        raise
 
-def adjust_column_widths(spreadsheet_id):
-    creds = setup_credentials()
-    service = build("sheets", "v4", credentials=creds)
-
-    column_widths = {
-        'company': 467,  # Move this to the first position
+def get_column_widths() -> Dict[str, int]:
+    return {
+        'company': 467,
         'job_title': 684,
-        'job_type': 112,  # Moved after job_title
+        'job_type': 112,
         'job_location': 255,
         'job_department': 548,
         'job_url': 662,
@@ -32,11 +39,11 @@ def adjust_column_widths(spreadsheet_id):
         'job_apply_end_date': 225,
         'last_seen': 170,
         'is_active': 63,
-        'company': 467,
         'job_board': 72,
         'job_board_url': 213
     }
 
+def create_update_requests(column_widths: Dict[str, int]) -> List[Dict]:
     requests = []
     for index, (column_name, width) in enumerate(column_widths.items()):
         requests.append({
@@ -53,11 +60,33 @@ def adjust_column_widths(spreadsheet_id):
                 "fields": "pixelSize"
             }
         })
+    return requests
 
-    body = {"requests": requests}
-    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-    print("Column widths adjusted successfully.")
+def adjust_column_widths(spreadsheet_id: str):
+    try:
+        creds = setup_credentials()
+        service = build("sheets", "v4", credentials=creds)
+
+        column_widths = get_column_widths()
+        requests = create_update_requests(column_widths)
+
+        body = {"requests": requests}
+        service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+        logger.info("Column widths adjusted successfully.")
+    except HttpError as err:
+        logger.error(f"An error occurred: {err}")
+        raise
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        raise
+
+def main():
+    try:
+        spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+        adjust_column_widths(spreadsheet_id)
+    except Exception as e:
+        logger.error(f"Script execution failed: {e}")
+        exit(1)
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
-    adjust_column_widths(spreadsheet_id)
+    main()
