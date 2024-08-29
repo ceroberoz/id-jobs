@@ -22,7 +22,26 @@ class Config:
     max_retries: int = 3
     sheet_range: str = 'Sheet1'
     sheet_id: int = 0  # Assumes first sheet in the spreadsheet
-    csv_file_path: str = 'output/merged.csv'
+    csv_directory: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'output'))
+
+    @staticmethod
+    def get_column_widths() -> Dict[str, int]:
+        return {
+            'company': 467,
+            'job_title': 684,
+            'job_type': 112,
+            'job_location': 255,
+            'job_department': 548,
+            'job_url': 662,
+            'first_seen': 130,
+            'base_salary': 304,
+            'job_level': 64,
+            'job_apply_end_date': 225,
+            'last_seen': 170,
+            'is_active': 63,
+            'job_board': 72,
+            'job_board_url': 213
+        }
 
 config = Config()
 
@@ -43,32 +62,54 @@ def setup_credentials():
         logger.error("Invalid JSON in GCP_JSON environment variable")
         sys.exit(1)
 
-def read_csv(file_path: str) -> List[List[str]]:
-    try:
-        df = pd.read_csv(file_path, dtype={'job_type': str})
-        columns = df.columns.tolist()
-        columns.insert(0, columns.pop(columns.index('company')))
-        job_type_index = columns.index('job_type')
-        job_title_index = columns.index('job_title')
-        columns.insert(job_title_index + 1, columns.pop(job_type_index))
-        df = df[columns]
-
-        df['job_type'] = df['job_type'].apply(sanitize_job_type)
-        df = df.fillna('')
-        df = df.astype(str).apply(lambda x: x.str.strip())
-        return [df.columns.tolist()] + df.values.tolist()
-    except FileNotFoundError:
-        logger.error(f"CSV file not found at {file_path}")
+def read_csv_files(directory: str) -> List[List[str]]:
+    all_data = []
+    header = None
+    csv_files = [f for f in os.listdir(directory) if f.endswith('.csv')]
+    
+    if not csv_files:
+        logger.error(f"No CSV files found in {directory}")
         sys.exit(1)
-    except pd.errors.EmptyDataError:
-        logger.error(f"CSV file is empty: {file_path}")
+    
+    for file in csv_files:
+        file_path = os.path.join(directory, file)
+        try:
+            df = pd.read_csv(file_path, dtype={'job_type': str})
+            if header is None:
+                header = df.columns.tolist()
+                header.insert(0, header.pop(header.index('company')))
+                job_type_index = header.index('job_type')
+                job_title_index = header.index('job_title')
+                header.insert(job_title_index + 1, header.pop(job_type_index))
+                all_data.append(header)
+            
+            df = df[header]
+            df['job_type'] = df['job_type'].apply(sanitize_job_type)
+            df = df.fillna('')
+            df = df.astype(str).apply(lambda x: x.str.strip())
+            all_data.extend(df.values.tolist())
+            logger.info(f"Successfully processed {file}")
+        except pd.errors.EmptyDataError:
+            logger.warning(f"CSV file is empty: {file_path}")
+        except Exception as e:
+            logger.error(f"Error processing {file}: {str(e)}")
+    
+    if not all_data:
+        logger.error("No data found in any CSV files")
         sys.exit(1)
+    
+    return all_data
 
 def validate_data(data: List[List[str]]) -> bool:
     if not data or len(data) < 2:
         logger.error("CSV data is empty or has insufficient rows")
         return False
-    # Add more validation as needed
+    expected_columns = set(config.get_column_widths().keys())
+    actual_columns = set(data[0])
+    if not expected_columns.issubset(actual_columns):
+        missing_columns = expected_columns - actual_columns
+        logger.error(f"Missing columns in CSV data: {', '.join(missing_columns)}")
+        return False
     return True
 
 def clean_data(data: List[List[str]]) -> List[List[str]]:
@@ -76,8 +117,8 @@ def clean_data(data: List[List[str]]) -> List[List[str]]:
 
 @contextmanager
 def get_sheets_service(creds):
-    service = build("sheets", "v4", credentials=creds)
     try:
+        service = build('sheets', 'v4', credentials=creds)
         yield service
     finally:
         service.close()
@@ -188,7 +229,7 @@ def main():
 
         logger.info(f"Attempting to access spreadsheet with ID: {spreadsheet_id}")
 
-        csv_content = read_csv(config.csv_file_path)
+        csv_content = read_csv_files(config.csv_directory)
         if not validate_data(csv_content):
             sys.exit(1)
 
