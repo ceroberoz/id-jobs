@@ -45,10 +45,10 @@ class BlibliSpiderJson(scrapy.Spider):
     def parse(self, response):
         try:
             data = json.loads(response.text)
-            jobs = data['responseObject']
+            departments = data['responseObject']
 
-            for job_group in jobs:
-                for job in job_group['jobs']:
+            for department in departments:
+                for job in department['jobs']:
                     yield self.parse_job(job)
 
         except json.JSONDecodeError as e:
