@@ -49,8 +49,8 @@ class EvermosSpiderJson(scrapy.Spider):
     def parse(self, response):
         try:
             data = json.loads(response.text)
-            branch_lookup = self.create_branch_lookup(data['branches'])
-            job_roles_lookup = self.create_job_roles_lookup(data['job_roles'])
+            branch_lookup = {branch['id']: branch['city'] for branch in data['branches']}
+            job_roles_lookup = {job_role['id']: job_role['name'] for job_role in data['job_roles']}
             
             for job in data['jobs']:
                 yield self.parse_job(job, branch_lookup, job_roles_lookup)
@@ -77,19 +77,31 @@ class EvermosSpiderJson(scrapy.Spider):
             'first_seen': self.timestamp,
             'base_salary': '',
             'job_type': self.get_job_type(job['job_type']),
-            'job_level': job['position_level'],
-            'job_apply_end_date': job['closing_date'],
-            'last_seen': '',
-            'is_active': 'True',
+            'job_level': job.get('position_level', 'N/A'),
+            'job_apply_end_date': job.get('closing_date', ''),
+            'last_seen': self.format_datetime(job['created_at']),
+            'is_active': True, #default is active
             'company': 'Evermos',
             'company_url': self.COMPANY_URL,
-            'job_board': 'N/A',
-            'job_board_url': 'N/A'
+            'job_board': 'Evermos Careers',
+            'job_board_url': 'https://evermos.com/home/karir/',
+
+            # Optional fields
+            # 'job_description': self.sanitize_string(job.get('description', '')),
+            # 'job_id': str(job['id']),
+            # 'remote': str(job.get('remote', False)),
         }
 
     @staticmethod
     def sanitize_string(s: Optional[str]) -> str:
         return s.replace(", ", " - ") if s else 'N/A'
 
-    def get_job_type(self, job_type_id: int) -> str:
-        return self.JOB_TYPE_MAPPING.get(job_type_id, 'N/A')
+    def get_job_type(self, job_type: int) -> str:
+        return self.JOB_TYPE_MAPPING.get(job_type, "N/A")
+
+    def format_datetime(self, date_string: str) -> str:
+        try:
+            dt = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
+            return dt.strftime("%d/%m/%Y %H:%M:%S")
+        except ValueError:
+            return date_string
