@@ -51,7 +51,7 @@ class SoftwareOneSpiderJson(scrapy.Spider):
                 return
 
             for job in jobs:
-                yield self.parse_job(job)
+                yield self.parse_job(job['data'])
 
         except json.JSONDecodeError as e:
             logger.error(f"Error decoding JSON: {e}")
@@ -59,23 +59,23 @@ class SoftwareOneSpiderJson(scrapy.Spider):
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
-    def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+    def parse_job(self, job):
         return {
-            'job_title': self.sanitize_string(job.get('title')),
-            'job_location': self.sanitize_string(job.get('location', {}).get('city')),
-            'job_department': self.sanitize_string(job.get('department')),
-            'job_url': f"{self.BASE_URL}/en/job/{job.get('id')}",
+            'job_title': job.get('title', 'N/A'),
+            'job_location': job.get('full_location', 'N/A'),
+            'job_department': job.get('tags2', ['N/A'])[0] if job.get('tags2') else 'N/A',
+            'job_url': job.get('apply_url', 'N/A'),
             'first_seen': self.timestamp,
-            'base_salary': 'N/A',
-            'job_type': self.sanitize_string(job.get('type')),
-            'job_level': self.sanitize_string(job.get('experienceLevel')),
-            'job_apply_end_date': 'N/A',
-            'last_seen': self.format_unix_time(job.get('postedDate')),
+            'base_salary': 'N/A',  # Salary information is not provided in the API response
+            'job_type': job.get('employment_type', 'N/A'),
+            'job_level': 'N/A',  # Job level is not directly provided in the API response
+            'job_apply_end_date': 'N/A',  # Application end date is not provided in the API response
+            'last_seen': 'N/A',
             'is_active': 'True',
-            'company': 'SoftwareOne',
-            'company_url': self.BASE_URL,
+            'company': job.get('hiring_organization', 'SoftwareOne'),
+            'company_url': 'https://careers.softwareone.com',
             'job_board': 'SoftwareOne Careers',
-            'job_board_url': f"{self.BASE_URL}/en/jobs"
+            'job_board_url': 'https://careers.softwareone.com/en/jobs'
         }
 
     @staticmethod
