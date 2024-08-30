@@ -41,8 +41,10 @@ class VidioSpiderXPath(scrapy.Spider):
             'is_active': 'True',
             'company': 'Vidio',
             'company_url': self.BASE_URL,
-            'job_board': 'N/A',
-            'job_board_url': 'N/A'
+            'job_board': 'Vidio',
+            'job_board_url': self.CAREERS_URL,
+            # 'job_id': self.get_job_id(selector),
+            # 'number_of_openings': self.get_number_of_openings(selector),
         }
 
     def get_job_url(self, selector) -> str:
@@ -56,3 +58,13 @@ class VidioSpiderXPath(scrapy.Spider):
         next_page_url = response.xpath('//li[@class="next"]/a/@href').get()
         if next_page_url:
             yield scrapy.Request(response.urljoin(next_page_url), callback=self.parse)
+
+    # Reserved for future use
+    # def get_job_id(self, selector) -> str:
+    #     return selector.attrib.get('id', '').replace('career_', '')
+
+    # def get_number_of_openings(self, selector) -> str:
+    #     openings_text = selector.css('.b-job__openings::text').get()
+    #     if openings_text:
+    #         return openings_text.split()[0]
+    #     return 'N/A'
