@@ -51,7 +51,7 @@ class DeallsSpiderJson(scrapy.Spider):
             'job_type': job['employmentTypes'],
             'job_level': 'N/A',
             'job_apply_end_date': '',
-            'last_seen': job['latestUpdatedAt'],
+            'last_seen': self.format_datetime(job['latestUpdatedAt']),
             'is_active': 'True',
             'company': job['company']['name'],
             'company_url': 'N/A',
@@ -77,3 +77,11 @@ class DeallsSpiderJson(scrapy.Spider):
     def get_job_location(job: Dict[str, Any]) -> str:
         city = job.get('city', {})
         return city.get('name', 'Remote') if city else 'Remote'
+
+    @staticmethod
+    def format_datetime(date_string: str) -> str:
+        try:
+            dt = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return date_string  # Return original string if parsing fails
