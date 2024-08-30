@@ -72,8 +72,8 @@ class BlibliSpiderJson(scrapy.Spider):
             'is_active': 'True',
             'company': 'Blibli',
             'company_url': self.BASE_URL,
-            'job_board': 'N/A',
-            'job_board_url': 'N/A'
+            'job_board': 'Blibli Job Portal',
+            'job_board_url': 'https://careers.blibli.com'
         }
 
     def get_job_url(self, job: Dict[str, Any]) -> str:

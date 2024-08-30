@@ -20,20 +20,20 @@ def adjust_column_widths(spreadsheet_id):
     service = build("sheets", "v4", credentials=creds)
 
     column_widths = {
-        'company': 467,  # Move this to the first position
-        'job_title': 684,
-        'job_type': 112,  # Moved after job_title
-        'job_location': 255,
-        'job_department': 548,
-        'job_url': 662,
+        'company': 273,  # Move this to the first position
+        'job_title': 346,
+        'job_type': 66,  # Moved after job_title
+        'job_location': 252,
+        'job_department': 197,
+        'job_url': 697,
         'first_seen': 130,
-        'base_salary': 304,
-        'job_level': 64,
-        'job_apply_end_date': 225,
-        'last_seen': 170,
+        'base_salary': 137,
+        'job_level': 101,
+        'job_apply_end_date': 136,
+        'last_seen': 131,
         'is_active': 63,
-        'company': 467,
-        'job_board': 72,
+        'company_url': 304,
+        'job_board': 111,
         'job_board_url': 213
     }
 
@@ -59,5 +59,5 @@ def adjust_column_widths(spreadsheet_id):
     print("Column widths adjusted successfully.")
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
     adjust_column_widths(spreadsheet_id)
