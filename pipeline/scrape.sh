@@ -17,6 +17,10 @@ echo "Emptied or created merged.csv file."
 # Initialize the merged file with the header
 echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url" > "$merged_file"
 
+# Array of spiders to skip (manually filled)
+# Exclude goto because it's not a real spider   
+skip_spiders=("goto")
+
 # Process spider files
 found_files=false
 for spider_file in "$spider_dir"/*.py; do
@@ -24,6 +28,12 @@ for spider_file in "$spider_dir"/*.py; do
 
     # Skip __init__.py file
     if [[ "$filename" == "__init__" ]]; then
+        continue
+    fi
+
+    # Check if the spider should be skipped
+    if [[ " ${skip_spiders[@]} " =~ " ${filename} " ]]; then
+        echo "Skipping $filename..."
         continue
     fi
 
