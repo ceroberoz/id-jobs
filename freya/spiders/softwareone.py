@@ -64,18 +64,30 @@ class SoftwareOneSpiderJson(scrapy.Spider):
             'job_title': job.get('title', 'N/A'),
             'job_location': job.get('full_location', 'N/A'),
             'job_department': job.get('tags2', ['N/A'])[0] if job.get('tags2') else 'N/A',
-            'job_url': job.get('apply_url', 'N/A'),
+            'job_url': f"https://careers.softwareone.com/en/jobs/{job.get('req_id', '')}",
             'first_seen': self.timestamp,
             'base_salary': 'N/A',  # Salary information is not provided in the API response
             'job_type': job.get('employment_type', 'N/A'),
             'job_level': 'N/A',  # Job level is not directly provided in the API response
             'job_apply_end_date': 'N/A',  # Application end date is not provided in the API response
-            'last_seen': 'N/A',
+            'last_seen': self.format_posted_date(job.get('posted_date', 'N/A')),
             'is_active': 'True',
             'company': job.get('hiring_organization', 'SoftwareOne'),
             'company_url': 'https://careers.softwareone.com',
             'job_board': 'SoftwareOne Careers',
-            'job_board_url': 'https://careers.softwareone.com/en/jobs'
+            'job_board_url': 'https://careers.softwareone.com/en/jobs',
+
+            # Optional fields
+            # 'job_description': job.get('description', 'N/A'),
+            # 'job_qualifications': job.get('qualifications', 'N/A'),
+            # 'job_responsibilities': job.get('responsibilities', 'N/A'),
+            # 'job_posted_date': self.format_posted_date(job.get('posted_date', 'N/A')),
+            # 'job_id': job.get('req_id', 'N/A'),
+            # 'job_categories': ', '.join(job.get('tags2', [])) if job.get('tags2') else 'N/A',
+            # 'job_street_address': job.get('street_address', 'N/A'),
+            # 'job_city': job.get('city', 'N/A'),
+            # 'job_country': job.get('country', 'N/A'),
+            # 'job_postal_code': job.get('postal_code', 'N/A')
         }
 
     @staticmethod
@@ -90,3 +102,13 @@ class SoftwareOneSpiderJson(scrapy.Spider):
             return datetime.fromtimestamp(unix_time / 1000).strftime('%Y-%m-%d %H:%M:%S')
         except (ValueError, TypeError):
             return 'N/A'
+
+    def format_posted_date(self, date_string):
+        try:
+            # Parse the date string
+            date_obj = datetime.strptime(date_string, "%B %d, %Y")
+            # Format the date as YYYY-MM-DD HH:MM:SS
+            return date_obj.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            # If parsing fails, return the original string
+            return date_string
