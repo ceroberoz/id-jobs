@@ -59,5 +59,5 @@ def adjust_column_widths(spreadsheet_id):
     print("Column widths adjusted successfully.")
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
     adjust_column_widths(spreadsheet_id)

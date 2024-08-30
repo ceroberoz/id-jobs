@@ -52,21 +52,27 @@ class KalibrrSpiderJson(scrapy.Spider):
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
         return {
-            'job_title': self.sanitize_string(job.get('name')),
-            'job_location': self.get_job_location(job),
-            'job_department': 'N/A',
-            'job_url': self.get_job_url(job),
+            # 'job_id': str(job['id']),
+            'job_title': self.sanitize_string(job['name']),
+            'job_location': self.get_location(job['google_location']),
+            'job_department': job['function'],
+            'job_url': self.JOB_URL_TEMPLATE.format(job['company']['code'], job['id']),
             'first_seen': self.timestamp,
-            'base_salary': job.get('base_salary'),
-            'job_type': job.get('tenure'),
-            'job_level': 'N/A',
-            'job_apply_end_date': job.get('application_end_date'),
-            'last_seen': '',
+            'base_salary': str(job['base_salary']) if job['base_salary'] else '',
+            # 'maximum_salary': str(job['maximum_salary']) if job['maximum_salary'] else '',
+            # 'salary_currency': job['salary_currency'] or '',
+            # 'salary_interval': job['salary_interval'] or '',
+            'job_type': job['tenure'],
+            'job_level': self.get_job_level(job['education_level']),
+            'job_apply_end_date': self.format_datetime(job['application_end_date']),
+            'last_seen': self.format_datetime(job['created_at']),
             'is_active': 'True',
-            'company': job.get('company_name'),
-            'company_url': self.get_company_url(job),
+            'company': job['company_name'],
+            'company_url': self.COMPANY_URL_TEMPLATE.format(job['company']['code']),
             'job_board': 'Kalibrr',
-            'job_board_url': self.JOB_BOARD_URL
+            'job_board_url': self.JOB_BOARD_URL,
+            # 'job_description': job['description'],
+            # 'job_qualifications': job['qualifications'],
         }
 
     @staticmethod
@@ -85,3 +91,29 @@ class KalibrrSpiderJson(scrapy.Spider):
     def get_company_url(self, job: Dict[str, Any]) -> str:
         company_code = job.get('company_info', {}).get('code', '')
         return self.COMPANY_URL_TEMPLATE.format(company_code)
+
+    def get_location(self, google_location: Dict[str, Any]) -> str:
+        if google_location and 'address_components' in google_location:
+            components = google_location['address_components']
+            city = components.get('city', '')
+            region = components.get('region', '')
+            country = components.get('country', '')
+            return f"{city}, {region}, {country}".strip(', ')
+        return 'N/A'
+
+    def get_job_level(self, education_level: int) -> str:
+        # You may need to adjust this mapping based on Kalibrr's education level codes
+        education_map = {
+            200: 'High School',
+            550: 'Bachelor',
+            650: 'Master',
+            # Add more mappings as needed
+        }
+        return education_map.get(education_level, 'N/A')
+
+    def format_datetime(self, date_string: str) -> str:
+        try:
+            dt = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+            return dt.strftime("%d/%m/%Y %H:%M:%S")
+        except ValueError:
+            return date_string
