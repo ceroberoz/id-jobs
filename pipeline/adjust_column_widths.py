@@ -2,6 +2,7 @@ import os
 import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 def get_env_var(var_name):
     """Retrieve environment variable or raise an error if not set."""
@@ -13,9 +14,12 @@ def get_env_var(var_name):
 def setup_credentials():
     """Setup Google Sheets API credentials."""
     gcp_json = get_env_var('GCP_JSON')
-    creds_dict = json.loads(gcp_json)
-    return service_account.Credentials.from_service_account_info(
-        creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    try:
+        creds_dict = json.loads(gcp_json)
+        return service_account.Credentials.from_service_account_info(
+            creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    except json.JSONDecodeError:
+        raise ValueError("Invalid JSON in GCP_JSON environment variable")
 
 def create_conditional_formatting_rules():
     """Create conditional formatting rules for the sheet."""
@@ -149,9 +153,8 @@ def create_conditional_formatting_rules():
 def create_filter_view():
     """Create a filter view for the sheet."""
     return {
-        "addFilterView": {
+        "setBasicFilter": {
             "filter": {
-                "title": "Filter by Job Age",
                 "range": {
                     "sheetId": 0,
                     "startRowIndex": 0,
@@ -170,27 +173,52 @@ def create_filter_view():
 
 def delete_existing_filter_view(service, spreadsheet_id, filter_title):
     """Delete existing filter view if it exists."""
-    spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-    sheet = spreadsheet['sheets'][0]
-    sheet_id = sheet['properties']['sheetId']
-    filter_views = sheet.get('filterViews', [])
-    for filter_view in filter_views:
-        if filter_view['title'] == filter_title:
-            filter_view_id = filter_view['filterViewId']
-            service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheet_id,
-                body={
-                    "requests": [
-                        {
-                            "deleteFilterView": {
-                                "filterId": filter_view_id
+    try:
+        spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        sheet = spreadsheet['sheets'][0]
+        sheet_id = sheet['properties']['sheetId']
+        filter_views = sheet.get('filterViews', [])
+        for filter_view in filter_views:
+            if filter_view['title'] == filter_title:
+                filter_view_id = filter_view['filterViewId']
+                service.spreadsheets().batchUpdate(
+                    spreadsheetId=spreadsheet_id,
+                    body={
+                        "requests": [
+                            {
+                                "deleteFilterView": {
+                                    "filterId": filter_view_id
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
+                ).execute()
+                print(f"Deleted existing filter view: {filter_title}")
+                return
+    except HttpError as err:
+        print(f"Error deleting filter view: {err}")
+        raise
+
+def create_filter_on_first_row():
+    """Create a filter on the first row of the sheet with condition to hide 'expired' in 'job_age'."""
+    return {
+        "setBasicFilter": {
+            "filter": {
+                "range": {
+                    "sheetId": 0,
+                    "startRowIndex": 0,
+                    "endRowIndex": 1,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": 16
+                },
+                "criteria": {
+                    "0": {
+                        "hiddenValues": ["expired"]
+                    }
                 }
-            ).execute()
-            print(f"Deleted existing filter view: {filter_title}")
-            return
+            }
+        }
+    }
 
 def adjust_column_widths(spreadsheet_id):
     """Adjust column widths, add conditional formatting, and create filter view."""
@@ -198,19 +226,19 @@ def adjust_column_widths(spreadsheet_id):
     service = build("sheets", "v4", credentials=creds)
 
     column_widths = {
-        'job_age': 100,
+        'job_age': 78,
         'company': 273,
-        'job_title': 346,
-        'job_type': 66,
-        'job_location': 252,
-        'job_department': 197,
-        'job_url': 697,
-        'first_seen': 130,
-        'base_salary': 137,
-        'job_level': 101,
-        'job_apply_end_date': 136,
+        'job_title': 464,
+        'job_type': 82,
+        'job_location': 116,
+        'job_department': 166,
+        'job_url': 593,
+        'first_seen': 131,
+        'base_salary': 104,
+        'job_level': 84,
+        'job_apply_end_date': 156,
         'last_seen': 131,
-        'is_active': 63,
+        'is_active': 83,
         'company_url': 304,
         'job_board': 111,
         'job_board_url': 213

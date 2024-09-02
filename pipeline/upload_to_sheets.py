@@ -13,6 +13,15 @@ from googleapiclient.errors import HttpError
 
 @dataclass
 class Config:
+    """
+    Configuration class for the Google Sheets API.
+
+    Attributes:
+        scopes (tuple): The scopes required for the API.
+        max_retries (int): The maximum number of retries for API calls.
+        sheet_range (str): The range of the sheet to update.
+        sheet_id (int): The ID of the sheet to update.
+    """
     scopes: tuple = ("https://www.googleapis.com/auth/spreadsheets",)
     max_retries: int = 3
     sheet_range: str = 'Sheet1'
@@ -21,7 +30,15 @@ class Config:
 config = Config()
 
 def get_env_var(var_name):
-    """Retrieve environment variable or exit if not set."""
+    """
+    Retrieve environment variable or exit if not set.
+
+    Args:
+        var_name (str): The name of the environment variable.
+
+    Returns:
+        str: The value of the environment variable.
+    """
     value = os.environ.get(var_name)
     if not value:
         print(f"Error: {var_name} environment variable is not set or is empty")
@@ -29,7 +46,12 @@ def get_env_var(var_name):
     return value
 
 def setup_credentials():
-    """Setup Google Sheets API credentials."""
+    """
+    Setup Google Sheets API credentials.
+
+    Returns:
+        google.oauth2.service_account.Credentials: The credentials object.
+    """
     gcp_json = get_env_var('GCP_JSON')
     try:
         creds_dict = json.loads(gcp_json)
@@ -40,7 +62,15 @@ def setup_credentials():
         sys.exit(1)
 
 def read_csv(file_path):
-    """Read and preprocess CSV file."""
+    """
+    Read and preprocess CSV file.
+
+    Args:
+        file_path (str): The path to the CSV file.
+
+    Returns:
+        list: The preprocessed CSV data.
+    """
     try:
         df = pd.read_csv(file_path, dtype={'job_type': str})
         columns = df.columns.tolist()
@@ -59,19 +89,43 @@ def read_csv(file_path):
         sys.exit(1)
 
 def validate_data(data):
-    """Validate CSV data."""
+    """
+    Validate CSV data.
+
+    Args:
+        data (list): The CSV data.
+
+    Returns:
+        bool: True if the data is valid, False otherwise.
+    """
     if not data or len(data) < 2:
         print("Error: CSV data is empty or has insufficient rows")
         return False
     return True
 
 def clean_data(data):
-    """Clean CSV data."""
+    """
+    Clean CSV data.
+
+    Args:
+        data (list): The CSV data.
+
+    Returns:
+        list: The cleaned CSV data.
+    """
     return [[str(cell).replace('\n', ' ').strip() for cell in row] for row in data]
 
 @contextmanager
 def get_sheets_service(creds):
-    """Context manager for Google Sheets service."""
+    """
+    Context manager for Google Sheets service.
+
+    Args:
+        creds (google.oauth2.service_account.Credentials): The credentials object.
+
+    Yields:
+        googleapiclient.discovery.Resource: The Google Sheets service.
+    """
     service = build("sheets", "v4", credentials=creds)
     try:
         yield service
@@ -79,7 +133,14 @@ def get_sheets_service(creds):
         service.close()
 
 def upload_to_sheets(service, spreadsheet_id, data):
-    """Upload data to Google Sheets."""
+    """
+    Upload data to Google Sheets.
+
+    Args:
+        service (googleapiclient.discovery.Resource): The Google Sheets service.
+        spreadsheet_id (str): The ID of the spreadsheet.
+        data (list): The data to upload.
+    """
     body = {'values': data}
     for attempt in range(config.max_retries):
         try:
@@ -105,7 +166,13 @@ def upload_to_sheets(service, spreadsheet_id, data):
             handle_http_error(err, attempt)
 
 def format_header_and_freeze(service, spreadsheet_id):
-    """Format header row as bold and freeze it."""
+    """
+    Format header row as bold and freeze it.
+
+    Args:
+        service (googleapiclient.discovery.Resource): The Google Sheets service.
+        spreadsheet_id (str): The ID of the spreadsheet.
+    """
     requests = [
         {
             "repeatCell": {
@@ -143,7 +210,13 @@ def format_header_and_freeze(service, spreadsheet_id):
     print("Header row formatted as bold and frozen.")
 
 def handle_http_error(err, attempt):
-    """Handle HTTP errors with retries."""
+    """
+    Handle HTTP errors with retries.
+
+    Args:
+        err (googleapiclient.errors.HttpError): The HTTP error.
+        attempt (int): The current attempt number.
+    """
     if err.resp.status in [403, 404]:
         print(f"Error {err.resp.status}: {err}")
         print("Check spreadsheet ID and service account permissions.")
@@ -157,7 +230,9 @@ def handle_http_error(err, attempt):
         sys.exit(1)
 
 def main():
-    """Main function to upload CSV data to Google Sheets."""
+    """
+    Main function to upload CSV data to Google Sheets.
+    """
     creds = setup_credentials()
     spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
     print(f"Attempting to access spreadsheet with ID: {spreadsheet_id}")
@@ -169,7 +244,15 @@ def main():
         upload_to_sheets(service, spreadsheet_id, cleaned_content)
 
 def sanitize_job_type(job_type):
-    """Sanitize job type values."""
+    """
+    Sanitize job type values.
+
+    Args:
+        job_type (str): The job type value.
+
+    Returns:
+        str: The sanitized job type value.
+    """
     if pd.isna(job_type):
         return ''
     job_type = str(job_type).replace(',', ' & ')
