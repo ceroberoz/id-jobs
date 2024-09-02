@@ -39,7 +39,7 @@ initialize_merged_file
 
 # Array of spiders to skip (manually filled)
 # Exclude goto because it's not a real spider
-skip_spiders=("goto" "blibli" "dealls" "jobstreet" "kalibrr" "evermos")
+skip_spiders=("goto")
 
 # Process spider files
 found_files=false
