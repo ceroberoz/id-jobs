@@ -7,6 +7,8 @@ import time
 from typing import Dict, Any, List
 from scrapy.utils.project import get_project_settings
 import uuid
+from freya.pipelines import calculate_job_age  # Import the function
+
 
 def clean_string(text):
     if not isinstance(text, str):
@@ -112,22 +114,26 @@ class JobstreetSpider(scrapy.Spider):
             self.logger.error(f"Unexpected error on page {response.meta['page']}: {e}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        first_seen = datetime.strptime(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Update this to the actual last seen date if available
+
         return {
             'job_title': clean_string(job.get('title', '')),
             'job_location': clean_string(job.get('jobLocation', {}).get('label', '')),
             'job_department': clean_string(f"{job.get('classification', {}).get('description', '')}-{job.get('subClassification', {}).get('description', '')}"),
             'job_url': f"https://id.jobstreet.com/job/{job.get('id', '')}",
-            'first_seen': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            'first_seen': first_seen,
             'base_salary': clean_string(job.get('salary', 'N/A')),
             'job_type': clean_string(job.get('workType', 'N/A')),
             'job_level': 'N/A',
             'job_apply_end_date': clean_string(job.get('listingDate', 'N/A')),
-            'last_seen': '',
+            'last_seen': last_seen,
             'is_active': 'True',
             'company': clean_string(job.get('companyName', '')),
             'company_url': '',
             'job_board': 'Jobstreet',
-            'job_board_url': 'https://id.jobstreet.com/'
+            'job_board_url': 'https://id.jobstreet.com/',
+            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
         }
 
     def errback_httpbin(self, failure):

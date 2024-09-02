@@ -2,6 +2,8 @@
 import scrapy
 import json
 from datetime import datetime
+from freya.pipelines import calculate_job_age  # Import the function
+
 
 
 class GotoSpiderJson(scrapy.Spider):
@@ -10,7 +12,7 @@ class GotoSpiderJson(scrapy.Spider):
 
     # Get timestamp in human readable format
     now = datetime.now()
-    timestamp = now.strftime("%d/%m/%Y %H:%M:%S")
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
 
     # override ROBOTSTXT_OBEY = False
     custom_settings = {
@@ -52,32 +54,34 @@ class GotoSpiderJson(scrapy.Spider):
                 # add foreach for each selector['job_list']
                 job_list = selector['job_list']
                 for selector in job_list:
+                    first_seen = self.timestamp
+                    last_seen = self.timestamp  # Update this to the actual last seen date if available
 
                     yield {
                         # Add job metadata
-                            'job_title': selector['text'].replace(',', '-'),
-                            'job_location': selector['categories']['location'],
-                            'job_department': selector['categories']['department'],
-                            'job_url': selector['urls']['show'],
-                            'first_seen': self.timestamp, # timestamp job added
+                        'job_title': selector['text'].replace(',', '-'),
+                        'job_location': selector['categories']['location'],
+                        'job_department': selector['categories']['department'],
+                        'job_url': selector['urls']['show'],
+                        'first_seen': first_seen,  # timestamp job added
 
-                            # Add job metadata
-                            'base_salary': '', # salary of job
-                            'job_type': selector['categories']['commitment'], # type of job, full-time, part-time, intern, remote
-                            'job_level': '', # level of job, entry, mid, senior
-                            'job_apply_end_date': '', # end date of job
-                            'last_seen': '', # timestamp job last seen
-                            'is_active': 'True', # job is still active, True or False
+                        # Add job metadata
+                        'base_salary': '',  # salary of job
+                        'job_type': selector['categories']['commitment'],  # type of job, full-time, part-time, intern, remote
+                        'job_level': '',  # level of job, entry, mid, senior
+                        'job_apply_end_date': '',  # end date of job
+                        'last_seen': last_seen,  # timestamp job last seen
+                        'is_active': 'True',  # job is still active, True or False
 
-                            # Add company metadata
-                            'company': 'GoTo', # company name
-                            'company_url': 'https://www.gotocompany.com/careers', #company url
+                        # Add company metadata
+                        'company': 'GoTo',  # company name
+                        'company_url': 'https://www.gotocompany.com/careers',  # company url
 
-                            # Add job board metadata
-                            'job_board': 'N/A', # name of job board
-                            'job_board_url': 'N/A' # url of job board
-                        }
-
+                        # Add job board metadata
+                        'job_board': 'N/A',  # name of job board
+                        'job_board_url': 'N/A',  # url of job board
+                        'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+                    }
 
         except json.JSONDecodeError as e:
             # Handle JSON decoding errors

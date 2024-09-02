@@ -4,25 +4,204 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 def get_env_var(var_name):
+    """Retrieve environment variable or raise an error if not set."""
     value = os.environ.get(var_name)
     if not value:
         raise ValueError(f"{var_name} environment variable is not set or is empty")
     return value
 
 def setup_credentials():
+    """Setup Google Sheets API credentials."""
     gcp_json = get_env_var('GCP_JSON')
     creds_dict = json.loads(gcp_json)
     return service_account.Credentials.from_service_account_info(
         creds_dict, scopes=["https://www.googleapis.com/auth/spreadsheets"])
 
+def create_conditional_formatting_rules():
+    """Create conditional formatting rules for the sheet."""
+    return [
+        {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [
+                        {
+                            "sheetId": 0,
+                            "startRowIndex": 1,
+                            "endRowIndex": 50000,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 1
+                        }
+                    ],
+                    "booleanRule": {
+                        "condition": {
+                            "type": "CUSTOM_FORMULA",
+                            "values": [
+                                {"userEnteredValue": '=$A2="new"'}
+                            ]
+                        },
+                        "format": {
+                            "backgroundColor": {
+                                "red": 0.6,
+                                "green": 1.0,
+                                "blue": 0.6
+                            }
+                        }
+                    }
+                },
+                "index": 0
+            }
+        },
+        {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [
+                        {
+                            "sheetId": 0,
+                            "startRowIndex": 1,
+                            "endRowIndex": 50000,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 1
+                        }
+                    ],
+                    "booleanRule": {
+                        "condition": {
+                            "type": "CUSTOM_FORMULA",
+                            "values": [
+                                {"userEnteredValue": '=$A2="recent"'}
+                            ]
+                        },
+                        "format": {
+                            "backgroundColor": {
+                                "red": 1.0,
+                                "green": 1.0,
+                                "blue": 0.6
+                            }
+                        }
+                    }
+                },
+                "index": 0
+            }
+        },
+        {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [
+                        {
+                            "sheetId": 0,
+                            "startRowIndex": 1,
+                            "endRowIndex": 50000,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 1
+                        }
+                    ],
+                    "booleanRule": {
+                        "condition": {
+                            "type": "CUSTOM_FORMULA",
+                            "values": [
+                                {"userEnteredValue": '=$A2="stale"'}
+                            ]
+                        },
+                        "format": {
+                            "backgroundColor": {
+                                "red": 1.0,
+                                "green": 0.6,
+                                "blue": 0.6
+                            }
+                        }
+                    }
+                },
+                "index": 0
+            }
+        },
+        {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [
+                        {
+                            "sheetId": 0,
+                            "startRowIndex": 1,
+                            "endRowIndex": 50000,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 1
+                        }
+                    ],
+                    "booleanRule": {
+                        "condition": {
+                            "type": "CUSTOM_FORMULA",
+                            "values": [
+                                {"userEnteredValue": '=$A2="expired"'}
+                            ]
+                        },
+                        "format": {
+                            "backgroundColor": {
+                                "red": 0.8,
+                                "green": 0.8,
+                                "blue": 0.8
+                            }
+                        }
+                    }
+                },
+                "index": 0
+            }
+        }
+    ]
+
+def create_filter_view():
+    """Create a filter view for the sheet."""
+    return {
+        "addFilterView": {
+            "filter": {
+                "title": "Filter by Job Age",
+                "range": {
+                    "sheetId": 0,
+                    "startRowIndex": 0,
+                    "endRowIndex": 50000,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": 16
+                },
+                "criteria": {
+                    "0": {
+                        "hiddenValues": ["expired"]
+                    }
+                }
+            }
+        }
+    }
+
+def delete_existing_filter_view(service, spreadsheet_id, filter_title):
+    """Delete existing filter view if it exists."""
+    spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    sheet = spreadsheet['sheets'][0]
+    sheet_id = sheet['properties']['sheetId']
+    filter_views = sheet.get('filterViews', [])
+    for filter_view in filter_views:
+        if filter_view['title'] == filter_title:
+            filter_view_id = filter_view['filterViewId']
+            service.spreadsheets().batchUpdate(
+                spreadsheetId=spreadsheet_id,
+                body={
+                    "requests": [
+                        {
+                            "deleteFilterView": {
+                                "filterId": filter_view_id
+                            }
+                        }
+                    ]
+                }
+            ).execute()
+            print(f"Deleted existing filter view: {filter_title}")
+            return
+
 def adjust_column_widths(spreadsheet_id):
+    """Adjust column widths, add conditional formatting, and create filter view."""
     creds = setup_credentials()
     service = build("sheets", "v4", credentials=creds)
 
     column_widths = {
-        'company': 273,  # Move this to the first position
+        'job_age': 100,
+        'company': 273,
         'job_title': 346,
-        'job_type': 66,  # Moved after job_title
+        'job_type': 66,
         'job_location': 252,
         'job_department': 197,
         'job_url': 697,
@@ -54,10 +233,14 @@ def adjust_column_widths(spreadsheet_id):
             }
         })
 
+    requests.extend(create_conditional_formatting_rules())
+    delete_existing_filter_view(service, spreadsheet_id, "Filter by Job Age")
+    requests.append(create_filter_view())
+
     body = {"requests": requests}
     service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-    print("Column widths adjusted successfully.")
+    print("Column widths, conditional formatting, and filter view adjusted successfully.")
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
     adjust_column_widths(spreadsheet_id)

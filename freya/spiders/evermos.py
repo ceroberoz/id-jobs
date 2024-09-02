@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
+from freya.pipelines import calculate_job_age  # Import the function
 
 logger = logging.getLogger(__name__)
 
@@ -69,22 +70,26 @@ class EvermosSpiderJson(scrapy.Spider):
         return {job_role['id']: job_role['name'] for job_role in job_roles_data}
 
     def parse_job(self, job: Dict[str, Any], branch_lookup: Dict[int, str], job_roles_lookup: Dict[int, str]) -> Dict[str, Any]:
+        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = self.format_datetime(job['created_at'])
+        
         return {
             'job_title': self.sanitize_string(job['title']),
             'job_location': branch_lookup.get(job['branch_id'], 'N/A'),
             'job_department': job_roles_lookup.get(job['job_role_id'], 'N/A'),
             'job_url': job['url'],
-            'first_seen': self.timestamp,
+            'first_seen': first_seen,
             'base_salary': '',
             'job_type': self.get_job_type(job['job_type']),
             'job_level': job.get('position_level', 'N/A'),
             'job_apply_end_date': job.get('closing_date', ''),
-            'last_seen': self.format_datetime(job['created_at']),
+            'last_seen': last_seen,
             'is_active': True, #default is active
             'company': 'Evermos',
             'company_url': self.COMPANY_URL,
             'job_board': 'Evermos Careers',
             'job_board_url': 'https://evermos.com/home/karir/',
+            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
 
             # Optional fields
             # 'job_description': self.sanitize_string(job.get('description', '')),
@@ -102,6 +107,6 @@ class EvermosSpiderJson(scrapy.Spider):
     def format_datetime(self, date_string: str) -> str:
         try:
             dt = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
-            return dt.strftime("%d/%m/%Y %H:%M:%S")
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
         except ValueError:
             return date_string

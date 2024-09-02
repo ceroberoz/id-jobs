@@ -4,6 +4,8 @@ from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
 import random
+from freya.pipelines import calculate_job_age  # Import the function
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,22 +69,26 @@ class DeallsSpiderJson(scrapy.Spider):
             logger.debug(f"Response content: {response.text}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = self.format_datetime(job.get('latestUpdatedAt', ''))
+        
         return {
             'job_title': self.sanitize_string(job.get('role', '')),
             'job_location': self.get_job_location(job),
             'job_department': self.get_job_department(job),
             'job_url': f"https://dealls.com/role/{job.get('slug', '')}",
-            'first_seen': self.timestamp,
+            'first_seen': first_seen,
             'base_salary': self.get_job_salary(job),
             'job_type': ', '.join(job.get('employmentTypes', [])),
             'job_level': self.get_job_level(job),
             'job_apply_end_date': '',
-            'last_seen': self.format_datetime(job.get('latestUpdatedAt', '')),
+            'last_seen': last_seen,
             'is_active': str(job.get('status', '') == 'active'),
             'company': job.get('company', {}).get('name', ''),
             'company_url': f"https://dealls.com/company/{job.get('company', {}).get('slug', '')}",
             'job_board': 'Dealls',
             'job_board_url': 'https://dealls.com/',
+            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
 
             # Optional fields
             # 'workplace_type': job['workplaceType'],
@@ -133,5 +139,4 @@ class DeallsSpiderJson(scrapy.Spider):
             dt = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
             return dt.strftime("%Y-%m-%d %H:%M:%S")
         except ValueError:
-            return date_string  # Return original string if parsing fails
             return date_string  # Return original string if parsing fails

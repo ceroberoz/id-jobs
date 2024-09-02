@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
+from freya.pipelines import calculate_job_age  # Import the function
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,28 +53,26 @@ class KalibrrSpiderJson(scrapy.Spider):
             )
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = self.format_datetime(job['created_at'])
+        
         return {
-            # 'job_id': str(job['id']),
             'job_title': self.sanitize_string(job['name']),
             'job_location': self.get_location(job['google_location']),
             'job_department': job['function'],
             'job_url': self.JOB_URL_TEMPLATE.format(job['company']['code'], job['id']),
-            'first_seen': self.timestamp,
+            'first_seen': first_seen,
             'base_salary': str(job['base_salary']) if job['base_salary'] else '',
-            # 'maximum_salary': str(job['maximum_salary']) if job['maximum_salary'] else '',
-            # 'salary_currency': job['salary_currency'] or '',
-            # 'salary_interval': job['salary_interval'] or '',
             'job_type': job['tenure'],
             'job_level': self.get_job_level(job['education_level']),
             'job_apply_end_date': self.format_datetime(job['application_end_date']),
-            'last_seen': self.format_datetime(job['created_at']),
+            'last_seen': last_seen,
             'is_active': 'True',
             'company': job['company_name'],
             'company_url': self.COMPANY_URL_TEMPLATE.format(job['company']['code']),
             'job_board': 'Kalibrr',
             'job_board_url': self.JOB_BOARD_URL,
-            # 'job_description': job['description'],
-            # 'job_qualifications': job['qualifications'],
+            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
         }
 
     @staticmethod
@@ -114,6 +114,6 @@ class KalibrrSpiderJson(scrapy.Spider):
     def format_datetime(self, date_string: str) -> str:
         try:
             dt = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
-            return dt.strftime("%d/%m/%Y %H:%M:%S")
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
         except ValueError:
             return date_string

@@ -15,11 +15,11 @@ mkdir -p "$output_dir"
 echo "Emptied or created merged.csv file."
 
 # Initialize the merged file with the header
-echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url" > "$merged_file"
+echo "job_title,job_location,job_department,job_url,first_seen,base_salary,job_type,job_level,job_apply_end_date,last_seen,is_active,company,company_url,job_board,job_board_url,job_age" > "$merged_file"
 
 # Array of spiders to skip (manually filled)
 # Exclude goto because it's not a real spider   
-skip_spiders=("goto")
+skip_spiders=("goto" "jobstreet" "dealls" "kalibrr")
 
 # Process spider files
 found_files=false

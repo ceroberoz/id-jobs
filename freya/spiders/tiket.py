@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
 import random
+from freya.pipelines import calculate_job_age  # Import the function
 
 logger = logging.getLogger(__name__)
 
@@ -53,22 +54,26 @@ class TiketSpiderJson(scrapy.Spider):
             logger.error(f"Unexpected error: {e}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = self.format_unix_time(job.get('createdAt'))
+        
         return {
             'job_title': self.sanitize_string(job.get('text')),
             'job_location': self.sanitize_string(job.get('categories', {}).get('location')),
             'job_department': self.sanitize_string(job.get('categories', {}).get('department')),
             'job_url': job.get('hostedUrl'),
-            'first_seen': self.timestamp,
+            'first_seen': first_seen,
             'base_salary': 'N/A',
             'job_type': self.sanitize_string(job.get('categories', {}).get('commitment')),
             'job_level': 'N/A',
             'job_apply_end_date': 'N/A',
-            'last_seen': self.format_unix_time(job.get('createdAt')),
+            'last_seen': last_seen,
             'is_active': 'True',
             'company': 'Tiket.com',
             'company_url': 'https://careers.tiket.com',
             'job_board': 'Tiket.com Careers',
-            'job_board_url': 'https://careers.tiket.com'
+            'job_board_url': 'https://careers.tiket.com',
+            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
         }
 
     @staticmethod

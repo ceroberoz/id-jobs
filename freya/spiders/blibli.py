@@ -4,6 +4,8 @@ from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
 import random
+from freya.pipelines import calculate_job_age  # Import the function
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,22 +60,26 @@ class BlibliSpiderJson(scrapy.Spider):
             logger.error(f"Unexpected error: {e}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = self.format_unix_time(job.get('createdDate'))
+        
         return {
             'job_title': self.sanitize_string(job.get('title')),
             'job_location': self.sanitize_string(job.get('location')),
             'job_department': self.sanitize_string(job.get('departmentName')),
             'job_url': self.get_job_url(job),
-            'first_seen': self.timestamp,
+            'first_seen': first_seen,
             'base_salary': 'N/A',
             'job_type': self.get_employment_type(job),
             'job_level': self.sanitize_string(job.get('experience')),
             'job_apply_end_date': 'N/A',
-            'last_seen': self.format_unix_time(job.get('createdDate')),
+            'last_seen': last_seen,
             'is_active': 'True',
             'company': 'Blibli',
             'company_url': self.BASE_URL,
             'job_board': 'Blibli Job Portal',
-            'job_board_url': 'https://careers.blibli.com'
+            'job_board_url': 'https://careers.blibli.com',
+            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
         }
 
     def get_job_url(self, job: Dict[str, Any]) -> str:
