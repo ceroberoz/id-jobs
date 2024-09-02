@@ -1,6 +1,6 @@
 import scrapy
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import random
 import urllib.parse
 import time
@@ -136,6 +136,15 @@ class JobstreetSpider(scrapy.Spider):
             company_name = company_name if company_name else "Private Advertiser"
             listing_date = job.get('listingDate', '')
             last_seen = format_date(listing_date)
+            advertiser_id = job.get('advertiser', {}).get('id', '')
+            
+            # Calculate job_apply_end_date (listing_date + 30 days)
+            if listing_date:
+                listing_datetime = datetime.strptime(listing_date, "%Y-%m-%dT%H:%M:%SZ")
+                apply_end_date = listing_datetime + timedelta(days=30)
+                job_apply_end_date = apply_end_date.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                job_apply_end_date = ''
             
             return {
                 'job_title': clean_string(job.get('title', '')),
@@ -146,11 +155,11 @@ class JobstreetSpider(scrapy.Spider):
                 'base_salary': clean_string(job.get('salary', 'N/A')),
                 'job_type': clean_string(job.get('workType', 'N/A')),
                 'job_level': self.extract_job_level(job),
-                'job_apply_end_date': format_date(listing_date),
+                'job_apply_end_date': job_apply_end_date,
                 'last_seen': last_seen,
                 'is_active': 'True',
                 'company': company_name,
-                'company_url': '', # TODO: Check if this is the correct company URL
+                'company_url': f"https://id.jobstreet.com/companies/{company_name.lower().replace(' ', '-')}-{advertiser_id}" if advertiser_id else '', # TODO: Check if this is the correct company URL
                 'job_board': 'Jobstreet',
                 'job_board_url': 'https://id.jobstreet.com/',
                 'job_age': calculate_job_age(first_seen, last_seen),
@@ -159,7 +168,7 @@ class JobstreetSpider(scrapy.Spider):
                 # 'job_description': clean_string(job.get('teaser', '')),
                 # 'work_arrangement': self.extract_work_arrangement(job),
                 # 'is_premium': str(job.get('isPremium', False)),
-                # 'advertiser_id': job.get('advertiser', {}).get('id', ''),
+                # 'advertiser_id': advertiser_id,
                 # 'display_type': job.get('displayType', ''),
             }
         except Exception as e:
