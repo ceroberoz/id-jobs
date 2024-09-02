@@ -1,11 +1,11 @@
 import os
+import requests
 import json
 import sys
 import time
 import random
 from dataclasses import dataclass
 from contextlib import contextmanager
-
 import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -13,32 +13,19 @@ from googleapiclient.errors import HttpError
 
 @dataclass
 class Config:
-    """
-    Configuration class for the Google Sheets API.
+    scopes: list
+    sheet_range: str
+    max_retries: int
+    sheet_id: int
 
-    Attributes:
-        scopes (tuple): The scopes required for the API.
-        max_retries (int): The maximum number of retries for API calls.
-        sheet_range (str): The range of the sheet to update.
-        sheet_id (int): The ID of the sheet to update.
-    """
-    scopes: tuple = ("https://www.googleapis.com/auth/spreadsheets",)
-    max_retries: int = 3
-    sheet_range: str = 'Sheet1'
-    sheet_id: int = 0  # Assumes first sheet in the spreadsheet
-
-config = Config()
+config = Config(
+    scopes=["https://www.googleapis.com/auth/spreadsheets"],
+    sheet_range="Sheet1!A1:Z1000",
+    max_retries=5,
+    sheet_id=0
+)
 
 def get_env_var(var_name):
-    """
-    Retrieve environment variable or exit if not set.
-
-    Args:
-        var_name (str): The name of the environment variable.
-
-    Returns:
-        str: The value of the environment variable.
-    """
     value = os.environ.get(var_name)
     if not value:
         print(f"Error: {var_name} environment variable is not set or is empty")
@@ -46,12 +33,6 @@ def get_env_var(var_name):
     return value
 
 def setup_credentials():
-    """
-    Setup Google Sheets API credentials.
-
-    Returns:
-        google.oauth2.service_account.Credentials: The credentials object.
-    """
     gcp_json = get_env_var('GCP_JSON')
     try:
         creds_dict = json.loads(gcp_json)
@@ -61,16 +42,62 @@ def setup_credentials():
         print("Error: Invalid JSON in GCP_JSON environment variable")
         sys.exit(1)
 
-def read_csv(file_path):
+# Fetch and save the regions JSON for future use
+def fetch_and_save_regions_json():
+    url = 'https://raw.githubusercontent.com/mtegarsantosa/json-nama-daerah-indonesia/master/regions.json'
+    response = requests.get(url)
+    regions = response.json()
+
+    os.makedirs('output', exist_ok=True)
+    with open('output/regions.json', 'w') as f:
+        json.dump(regions, f)
+
+# Load the regions JSON from the output folder for future use
+def load_regions_json():
+    with open('output/regions.json', 'r') as f:
+        return json.load(f)
+
+# Sanitize job location by using the regions JSON
+# This function needs more R&D for future use
+def sanitize_job_location(job_location):
     """
-    Read and preprocess CSV file.
+    Sanitize job location by using json from the output folder
+    and replace the job location with the corresponding name from the json.
 
     Args:
-        file_path (str): The path to the CSV file.
+        job_location (str): The job location value.
 
     Returns:
-        list: The preprocessed CSV data.
+        str: The sanitized job location value.
     """
+    if pd.isna(job_location):
+        return 'N/A'
+    
+    regions = load_regions_json()
+
+    # Replace English direction words with Bahasa equivalents
+    direction_map = {
+        "west": "barat",
+        "east": "timur",
+        "north": "utara",
+        "south": "selatan"
+    }
+    for eng, bahasa in direction_map.items():
+        job_location = job_location.replace(eng, bahasa)
+
+    for region in regions:
+        for kota in region['kota']:
+            if kota in job_location:
+                if "Kab." in job_location or "Kota" in job_location:
+                    return kota
+                else:
+                    return f"Kota {kota}"
+        if region['provinsi'] in job_location:
+            return f"Kota {region['provinsi']}"
+
+    return job_location
+
+def read_csv(file_path):
     try:
         df = pd.read_csv(file_path, dtype={'job_type': str})
         columns = df.columns.tolist()
@@ -81,6 +108,8 @@ def read_csv(file_path):
         columns.insert(job_title_index + 1, columns.pop(job_type_index))
         df = df[columns]
         df['job_type'] = df['job_type'].apply(sanitize_job_type)
+        # Commented out for future use
+        # df['job_location'] = df['job_location'].apply(sanitize_job_location)
         df = df.fillna('')
         df = df.astype(str).apply(lambda x: x.str.strip())
         return [df.columns.tolist()] + df.values.tolist()
@@ -89,43 +118,16 @@ def read_csv(file_path):
         sys.exit(1)
 
 def validate_data(data):
-    """
-    Validate CSV data.
-
-    Args:
-        data (list): The CSV data.
-
-    Returns:
-        bool: True if the data is valid, False otherwise.
-    """
     if not data or len(data) < 2:
         print("Error: CSV data is empty or has insufficient rows")
         return False
     return True
 
 def clean_data(data):
-    """
-    Clean CSV data.
-
-    Args:
-        data (list): The CSV data.
-
-    Returns:
-        list: The cleaned CSV data.
-    """
     return [[str(cell).replace('\n', ' ').strip() for cell in row] for row in data]
 
 @contextmanager
 def get_sheets_service(creds):
-    """
-    Context manager for Google Sheets service.
-
-    Args:
-        creds (google.oauth2.service_account.Credentials): The credentials object.
-
-    Yields:
-        googleapiclient.discovery.Resource: The Google Sheets service.
-    """
     service = build("sheets", "v4", credentials=creds)
     try:
         yield service
@@ -133,14 +135,6 @@ def get_sheets_service(creds):
         service.close()
 
 def upload_to_sheets(service, spreadsheet_id, data):
-    """
-    Upload data to Google Sheets.
-
-    Args:
-        service (googleapiclient.discovery.Resource): The Google Sheets service.
-        spreadsheet_id (str): The ID of the spreadsheet.
-        data (list): The data to upload.
-    """
     body = {'values': data}
     for attempt in range(config.max_retries):
         try:
@@ -166,13 +160,6 @@ def upload_to_sheets(service, spreadsheet_id, data):
             handle_http_error(err, attempt)
 
 def format_header_and_freeze(service, spreadsheet_id):
-    """
-    Format header row as bold and freeze it.
-
-    Args:
-        service (googleapiclient.discovery.Resource): The Google Sheets service.
-        spreadsheet_id (str): The ID of the spreadsheet.
-    """
     requests = [
         {
             "repeatCell": {
@@ -210,13 +197,6 @@ def format_header_and_freeze(service, spreadsheet_id):
     print("Header row formatted as bold and frozen.")
 
 def handle_http_error(err, attempt):
-    """
-    Handle HTTP errors with retries.
-
-    Args:
-        err (googleapiclient.errors.HttpError): The HTTP error.
-        attempt (int): The current attempt number.
-    """
     if err.resp.status in [403, 404]:
         print(f"Error {err.resp.status}: {err}")
         print("Check spreadsheet ID and service account permissions.")
@@ -229,30 +209,7 @@ def handle_http_error(err, attempt):
         print(f"Failed after {config.max_retries} attempts: {err}")
         sys.exit(1)
 
-def main():
-    """
-    Main function to upload CSV data to Google Sheets.
-    """
-    creds = setup_credentials()
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
-    print(f"Attempting to access spreadsheet with ID: {spreadsheet_id}")
-    csv_content = read_csv('output/merged.csv')
-    if not validate_data(csv_content):
-        sys.exit(1)
-    cleaned_content = clean_data(csv_content)
-    with get_sheets_service(creds) as service:
-        upload_to_sheets(service, spreadsheet_id, cleaned_content)
-
 def sanitize_job_type(job_type):
-    """
-    Sanitize job type values.
-
-    Args:
-        job_type (str): The job type value.
-
-    Returns:
-        str: The sanitized job type value.
-    """
     if pd.isna(job_type):
         return ''
     job_type = str(job_type).replace(',', ' & ')
@@ -274,6 +231,20 @@ def sanitize_job_type(job_type):
         return 'Internship'
     else:
         return job_type
+
+def main():
+    # Fetch and save the regions JSON for future use
+    # fetch_and_save_regions_json()
+
+    creds = setup_credentials()
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+    print(f"Attempting to access spreadsheet with ID: {spreadsheet_id}")
+    csv_content = read_csv('output/merged.csv')
+    if not validate_data(csv_content):
+        sys.exit(1)
+    cleaned_content = clean_data(csv_content)
+    with get_sheets_service(creds) as service:
+        upload_to_sheets(service, spreadsheet_id, cleaned_content)
 
 if __name__ == "__main__":
     main()
