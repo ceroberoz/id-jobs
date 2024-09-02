@@ -60,7 +60,7 @@ jobs:
         run: python pipeline/upload_to_sheets.py
 
       # Adjust column widths, apply and filter view formatting
-      - name: Adjust Column Widths
+      - name: Adjust Column Widths, Apply and Filter View Formatting
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}

@@ -1,6 +1,6 @@
 import scrapy
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import random
 import urllib.parse
 import time
@@ -8,18 +8,22 @@ from typing import Dict, Any, List
 from scrapy.utils.project import get_project_settings
 import uuid
 from freya.pipelines import calculate_job_age  # Import the function
-
-
-def clean_string(text):
-    if not isinstance(text, str):
-        return text
-    return text.replace('-', ' ').replace('=', ' ').replace(';', ' ').replace(',', ' ').replace('\n', ' ').strip()
+from freya.utils import clean_string, format_date
 
 def generate_random_id():
     return str(uuid.uuid4())
 
 def generate_random_query_id():
     return f"{uuid.uuid4().hex}-{random.randint(1000000, 9999999)}"
+
+def format_date(date_string):
+    if not date_string or date_string == 'N/A':
+        return 'N/A'
+    try:
+        dt = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%SZ")
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return date_string
 
 class JobstreetSpider(scrapy.Spider):
     name = 'jobstreet'
@@ -114,27 +118,77 @@ class JobstreetSpider(scrapy.Spider):
             self.logger.error(f"Unexpected error on page {response.meta['page']}: {e}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
-        first_seen = datetime.strptime(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
-        last_seen = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Update this to the actual last seen date if available
+        """
+        Parse a job listing and return a structured dictionary.
 
-        return {
-            'job_title': clean_string(job.get('title', '')),
-            'job_location': clean_string(job.get('jobLocation', {}).get('label', '')),
-            'job_department': clean_string(f"{job.get('classification', {}).get('description', '')}-{job.get('subClassification', {}).get('description', '')}"),
-            'job_url': f"https://id.jobstreet.com/job/{job.get('id', '')}",
-            'first_seen': first_seen,
-            'base_salary': clean_string(job.get('salary', 'N/A')),
-            'job_type': clean_string(job.get('workType', 'N/A')),
-            'job_level': 'N/A',
-            'job_apply_end_date': clean_string(job.get('listingDate', 'N/A')),
-            'last_seen': last_seen,
-            'is_active': 'True',
-            'company': clean_string(job.get('companyName', '')),
-            'company_url': '',
-            'job_board': 'Jobstreet',
-            'job_board_url': 'https://id.jobstreet.com/',
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
-        }
+        Args:
+            job (Dict[str, Any]): Raw job data from the API.
+
+        Returns:
+            Dict[str, Any]: Structured job data.
+        """
+        now = datetime.now(timezone.utc)
+        first_seen = now.strftime("%Y-%m-%d %H:%M:%S")
+        
+        try:
+            job_id = str(job.get('id', ''))
+            company_name = clean_string(job.get('companyName', ''))
+            company_name = company_name if company_name else "Private Advertiser"
+            listing_date = job.get('listingDate', '')
+            last_seen = format_date(listing_date)
+            advertiser_id = job.get('advertiser', {}).get('id', '')
+            
+            # Calculate job_apply_end_date (listing_date + 30 days)
+            if listing_date:
+                listing_datetime = datetime.strptime(listing_date, "%Y-%m-%dT%H:%M:%SZ")
+                apply_end_date = listing_datetime + timedelta(days=30)
+                job_apply_end_date = apply_end_date.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                job_apply_end_date = ''
+            
+            return {
+                'job_title': clean_string(job.get('title', '')),
+                'job_location': clean_string(job.get('jobLocation', {}).get('label', '')),
+                'job_department': clean_string(f"{job.get('classification', {}).get('description', '')}-{job.get('subClassification', {}).get('description', '')}"),
+                'job_url': f"https://id.jobstreet.com/job/{job_id}",
+                'first_seen': first_seen,
+                'base_salary': clean_string(job.get('salary', 'N/A')),
+                'job_type': clean_string(job.get('workType', 'N/A')),
+                'job_level': self.extract_job_level(job),
+                'job_apply_end_date': job_apply_end_date,
+                'last_seen': last_seen,
+                'is_active': 'True',
+                'company': company_name,
+                'company_url': f"https://id.jobstreet.com/companies/{company_name.lower().replace(' ', '-')}-{advertiser_id}" if advertiser_id else '', # TODO: Check if this is the correct company URL
+                'job_board': 'Jobstreet',
+                'job_board_url': 'https://id.jobstreet.com/',
+                'job_age': calculate_job_age(first_seen, last_seen),
+
+                # TODO: Add job description, work arrangement, is_premium, advertiser_id, and display_type
+                # 'job_description': clean_string(job.get('teaser', '')),
+                # 'work_arrangement': self.extract_work_arrangement(job),
+                # 'is_premium': str(job.get('isPremium', False)),
+                # 'advertiser_id': advertiser_id,
+                # 'display_type': job.get('displayType', ''),
+            }
+        except Exception as e:
+            self.logger.error(f"Error parsing job {job_id} from {company_name}: {str(e)}")
+            return {}  # Return an empty dict if parsing fails
+
+    def extract_job_level(self, job: Dict[str, Any]) -> str:
+        """Extract job level from classification if available."""
+        classification = job.get('classification', {}).get('description', '')
+        subclassification = job.get('subClassification', {}).get('description', '')
+        return f"{classification} - {subclassification}" if classification or subclassification else 'N/A'
+
+    def extract_company_url(self, job: Dict[str, Any]) -> str:
+        """Extract company URL from branding if available."""
+        return job.get('branding', {}).get('assets', {}).get('logo', {}).get('strategies', {}).get('serpLogo', '')
+
+    def extract_work_arrangement(self, job: Dict[str, Any]) -> str:
+        """Extract work arrangement if available."""
+        arrangements = job.get('workArrangements', {}).get('data', [])
+        return ', '.join([arr.get('label', {}).get('text', '') for arr in arrangements]) if arrangements else 'N/A'
 
     def errback_httpbin(self, failure):
         self.logger.error(f"HTTP Error: {failure}")

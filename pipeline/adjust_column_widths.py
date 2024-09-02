@@ -227,21 +227,21 @@ def adjust_column_widths(spreadsheet_id):
 
     column_widths = {
         'job_age': 78,
-        'company': 273,
-        'job_title': 464,
+        'company': 467,
+        'job_title': 650,
         'job_type': 82,
-        'job_location': 116,
-        'job_department': 166,
-        'job_url': 593,
+        'job_location': 344,
+        'job_department': 548,
+        'job_url': 662,
         'first_seen': 131,
-        'base_salary': 104,
-        'job_level': 84,
+        'base_salary': 303,
+        'job_level': 96,
         'job_apply_end_date': 156,
         'last_seen': 131,
         'is_active': 83,
-        'company_url': 304,
-        'job_board': 111,
-        'job_board_url': 213
+        'company_url': 646,
+        'job_board': 136,
+        'job_board_url': 244
     }
 
     requests = []
