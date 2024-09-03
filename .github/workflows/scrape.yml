@@ -65,7 +65,7 @@ jobs:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
           PYTHONUNBUFFERED: 1
-        run: python pipeline/adjust_column_widths.py
+        run: python pipeline/sheet_updater.py
 
       # Cleanup output directory
       - name: Cleanup
