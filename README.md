@@ -8,6 +8,9 @@
 
 ## What's New?
 
+- **Work Arrangement Feature**: Track whether jobs are Remote, Hybrid, or On-site.
+- **Job Apply End Date**: Automatically calculate application deadlines (30 days from last seen date).
+- **Enhanced Data Cleaning**: Improved pre-upload data sanitization process.
 - **Job Age Feature**: Track the age of job listings to identify the most recent opportunities.
 - **Expanded Job Portal Coverage**: Added new job portals including Blibli, Dealls, Evermos, GoTo, and Vidio.
 
@@ -36,13 +39,19 @@ This color scheme is designed to guide users towards the most recent job opportu
 
 ## How It Works
 
-id-jobs automatically visits Indonesian job websites, collects relevant information, and organizes it in a single spreadsheet.
+id-jobs automatically visits Indonesian job websites, collects relevant information, and organizes it in a single spreadsheet. The data is cleaned and formatted before being uploaded to ensure consistency and readability.
 
 ![How Scraper Works](how-scraper-works.gif)
 
+## Preview
+
+Here's a preview of the id-jobs data in action:
+
+![id-jobs Preview](screen-capture-dev.png)
+
 ## Why Use id-jobs?
 
-Finding the right job in Indonesia can be challenging. id-jobs simplifies this process by consolidating information from multiple websites into one place.
+Finding the right job in Indonesia can be challenging. id-jobs simplifies this process by consolidating information from multiple websites into one place, providing additional insights such as work arrangements and application deadlines.
 
 ## Data Sources
 
@@ -62,6 +71,8 @@ We collect data from a wide range of sources, including:
 ## Features
 
 - **Daily Updates**: Automated daily updates through CI/CD pipelines.
+- **Work Arrangement Tracking**: Identify Remote, Hybrid, and On-site opportunities.
+- **Application Deadline Estimation**: Calculated end dates for job applications.
 - **Optimized Data Collection**: Improved accuracy and coverage of job listings.
 - **User-Friendly Interface**: Access job data through a Google Sheets interface.
 - **Comprehensive Information**: Data from multiple job boards and company websites.
