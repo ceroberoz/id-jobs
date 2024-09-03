@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
 from freya.pipelines import calculate_job_age  # Import the function
+from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +41,15 @@ class VidioSpiderXPath(scrapy.Spider):
             'base_salary': 'N/A',
             'job_type': 'N/A',
             'job_level': 'N/A',
-            'job_apply_end_date': 'N/A',
+            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
             'last_seen': last_seen,
             'is_active': 'True',
             'company': 'Vidio',
             'company_url': self.BASE_URL,
             'job_board': 'Vidio',
             'job_board_url': self.CAREERS_URL,
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen), # Ensure this line is present
+            'work_arrangement': '', # TODO: Check if this is the correct work arrangement
         }
 
     def get_job_url(self, selector) -> str:

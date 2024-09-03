@@ -50,7 +50,7 @@ def read_csv(file_path):
 
         # Define the desired column order
         desired_order = [
-            'job_age', 'company', 'job_title', 'job_type', 'job_department',
+            'job_age', 'company', 'work_arrangement', 'job_title', 'job_type', 'job_department',
             'job_location', 'job_url', 'base_salary', 'job_level', 'first_seen',
             'last_seen', 'job_apply_end_date', 'is_active', 'job_board', 'company_url', 'job_board_url'
         ]
@@ -63,6 +63,9 @@ def read_csv(file_path):
 
         # Sanitize job_type column
         df['job_type'] = df['job_type'].apply(sanitize_job_type)
+
+        # Sanitize work_arrangement column
+        df['work_arrangement'] = df['work_arrangement'].apply(sanitize_work_arrangement)
 
         # Replace NaN values with empty strings
         df = df.fillna('')
@@ -175,7 +178,7 @@ def upload_to_sheets(service, spreadsheet_id, data):
 
 def main():
     creds = setup_credentials()
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
 
     print(f"Attempting to access spreadsheet with ID: {spreadsheet_id}")
 
@@ -220,6 +223,19 @@ def sanitize_job_type(job_type):
         return 'Internship'
     else:
         return job_type  # Return as is if not matching any criteria
+
+def sanitize_work_arrangement(arrangement):
+    if pd.isna(arrangement):
+        return ''
+    arrangement = str(arrangement).lower()
+    if 'remote' in arrangement:
+        return 'Remote'
+    elif 'hybrid' in arrangement:
+        return 'Hybrid'
+    elif 'onsite' in arrangement or 'on-site' in arrangement:
+        return 'On-site'
+    else:
+        return arrangement.capitalize()
 
 if __name__ == "__main__":
     main()

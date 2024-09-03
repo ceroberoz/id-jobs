@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, Optional
 import random
 from freya.pipelines import calculate_job_age  # Import the function
-
+from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
@@ -74,14 +74,15 @@ class SoftwareOneSpiderJson(scrapy.Spider):
             'base_salary': 'N/A',  # Salary information is not provided in the API response
             'job_type': job.get('employment_type', 'N/A'),
             'job_level': 'N/A',  # Job level is not directly provided in the API response
-            'job_apply_end_date': 'N/A',  # Application end date is not provided in the API response
+            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
             'last_seen': last_seen,
             'is_active': 'True',
             'company': job.get('hiring_organization', 'SoftwareOne'),
             'company_url': 'https://careers.softwareone.com',
             'job_board': 'SoftwareOne Careers',
             'job_board_url': 'https://careers.softwareone.com/en/jobs',
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen),  # Ensure this line is present
+            'work_arrangement': self.get_work_arrangement(job),
 
             # Optional fields
             # 'job_description': job.get('description', 'N/A'),
@@ -118,3 +119,17 @@ class SoftwareOneSpiderJson(scrapy.Spider):
         except ValueError:
             # If parsing fails, return the original string
             return date_string
+
+    # Add this method to the class
+    def get_work_arrangement(self, job):
+        # Implement logic to determine work arrangement
+        # This is an example, adjust according to the actual data structure
+        job_title = job.get('title', '').lower()
+        job_description = job.get('description', '').lower()
+        
+        if 'remote' in job_title or 'remote' in job_description:
+            return 'Remote'
+        elif 'hybrid' in job_title or 'hybrid' in job_description:
+            return 'Hybrid'
+        else:
+            return 'On-site'

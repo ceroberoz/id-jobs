@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, Optional
 import random
 from freya.pipelines import calculate_job_age  # Import the function
-
+from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
@@ -72,14 +72,15 @@ class BlibliSpiderJson(scrapy.Spider):
             'base_salary': 'N/A',
             'job_type': self.get_employment_type(job),
             'job_level': self.sanitize_string(job.get('experience')),
-            'job_apply_end_date': 'N/A',
+            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
             'last_seen': last_seen,
             'is_active': 'True',
             'company': 'Blibli',
             'company_url': self.BASE_URL,
             'job_board': 'Blibli Job Portal',
             'job_board_url': 'https://careers.blibli.com',
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen),  # Ensure this line is present
+            'work_arrangement': '', # TODO: Check if this is the correct work arrangement
         }
 
     def get_job_url(self, job: Dict[str, Any]) -> str:

@@ -154,7 +154,7 @@ class JobstreetSpider(scrapy.Spider):
                 'first_seen': first_seen,
                 'base_salary': clean_string(job.get('salary', 'N/A')),
                 'job_type': clean_string(job.get('workType', 'N/A')),
-                'job_level': self.extract_job_level(job),
+                'job_level': '', # TODO: Check if this is the correct job level
                 'job_apply_end_date': job_apply_end_date,
                 'last_seen': last_seen,
                 'is_active': 'True',
@@ -166,7 +166,7 @@ class JobstreetSpider(scrapy.Spider):
 
                 # TODO: Add job description, work arrangement, is_premium, advertiser_id, and display_type
                 # 'job_description': clean_string(job.get('teaser', '')),
-                # 'work_arrangement': self.extract_work_arrangement(job),
+                'work_arrangement': self.extract_work_arrangement(job),
                 # 'is_premium': str(job.get('isPremium', False)),
                 # 'advertiser_id': advertiser_id,
                 # 'display_type': job.get('displayType', ''),

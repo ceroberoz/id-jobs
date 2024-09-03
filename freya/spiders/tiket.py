@@ -2,9 +2,10 @@ import scrapy
 import json
 from datetime import datetime
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import random
 from freya.pipelines import calculate_job_age  # Import the function
+from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
@@ -66,14 +67,23 @@ class TiketSpiderJson(scrapy.Spider):
             'base_salary': 'N/A',
             'job_type': self.sanitize_string(job.get('categories', {}).get('commitment')),
             'job_level': 'N/A',
-            'job_apply_end_date': 'N/A',
+            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
             'last_seen': last_seen,
             'is_active': 'True',
             'company': 'Tiket.com',
             'company_url': 'https://careers.tiket.com',
             'job_board': 'Tiket.com Careers',
             'job_board_url': 'https://careers.tiket.com',
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen),
+            'work_arrangement': self.extract_work_arrangement(job),
+
+            # Optional fields
+            # 'job_description': self.sanitize_string(job.get('descriptionPlain')),
+            # 'job_qualifications': self.extract_qualifications(job.get('lists', [])),
+            # 'job_responsibilities': self.extract_responsibilities(job.get('lists', [])),
+            # 'job_team': self.sanitize_string(job.get('categories', {}).get('team')),
+            # 'job_country': job.get('country', 'N/A'),
+            # 'apply_url': job.get('applyUrl'),
         }
 
     @staticmethod
@@ -90,3 +100,20 @@ class TiketSpiderJson(scrapy.Spider):
             return datetime.fromtimestamp(unix_time / 1000).strftime('%Y-%m-%d %H:%M:%S')
         except (ValueError, TypeError):
             return 'N/A'
+
+    def extract_qualifications(self, lists: List[Dict[str, Any]]) -> str:
+        for item in lists:
+            if "Mandatory belongings" in item.get('text', ''):
+                return self.sanitize_string(item.get('content', ''))
+        return 'N/A'
+
+    def extract_responsibilities(self, lists: List[Dict[str, Any]]) -> str:
+        for item in lists:
+            if "Your main duties" in item.get('text', ''):
+                return self.sanitize_string(item.get('content', ''))
+        return 'N/A'
+
+    def extract_work_arrangement(self, job: Dict[str, Any]) -> str:
+        # Implement logic to extract work arrangement from job data
+        # This is just an example, adjust according to the actual data structure
+        return job.get('workplaceType', 'N/A')

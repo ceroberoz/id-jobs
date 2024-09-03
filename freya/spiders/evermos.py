@@ -89,7 +89,8 @@ class EvermosSpiderJson(scrapy.Spider):
             'company_url': self.COMPANY_URL,
             'job_board': 'Evermos Careers',
             'job_board_url': 'https://evermos.com/home/karir/',
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen),  # Ensure this line is present
+            'work_arrangement': str(job.get('remote', False)), # TODO: Check if this is the correct work arrangement
 
             # Optional fields
             # 'job_description': self.sanitize_string(job.get('description', '')),

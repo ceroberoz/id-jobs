@@ -5,7 +5,7 @@ import logging
 from typing import Dict, Any, Optional
 import random
 from freya.pipelines import calculate_job_age  # Import the function
-
+from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
@@ -81,14 +81,15 @@ class DeallsSpiderJson(scrapy.Spider):
             'base_salary': self.get_job_salary(job),
             'job_type': ', '.join(job.get('employmentTypes', [])),
             'job_level': self.get_job_level(job),
-            'job_apply_end_date': '',
+            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
             'last_seen': last_seen,
             'is_active': str(job.get('status', '') == 'active'),
             'company': job.get('company', {}).get('name', ''),
             'company_url': f"https://dealls.com/company/{job.get('company', {}).get('slug', '')}",
             'job_board': 'Dealls',
             'job_board_url': 'https://dealls.com/',
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen),  # Ensure this line is present
+            'work_arrangement': job['workplaceType'], # TODO: Check if this is the correct work arrangement
 
             # Optional fields
             # 'workplace_type': job['workplaceType'],

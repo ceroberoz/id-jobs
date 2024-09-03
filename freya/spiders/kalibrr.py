@@ -72,12 +72,30 @@ class KalibrrSpiderJson(scrapy.Spider):
             'company_url': self.COMPANY_URL_TEMPLATE.format(job['company']['code']),
             'job_board': 'Kalibrr',
             'job_board_url': self.JOB_BOARD_URL,
-            'job_age': calculate_job_age(first_seen, last_seen)  # Ensure this line is present
+            'job_age': calculate_job_age(first_seen, last_seen),
+            'work_arrangement': self.get_work_arrangement(job),
+
+            # Optional fields
+        #     'job_description': self.sanitize_string(job['description']),
+        #     'job_qualifications': self.sanitize_string(job['qualifications']),
+        #     'number_of_openings': job['number_of_openings'],
+        #     'company_industry': job['company']['industry'],
+        #     'company_description': self.sanitize_string(job['company']['description']),
         }
+
+    def get_work_arrangement(self, job: Dict[str, Any]) -> str:
+        if job['is_work_from_home']:
+            return 'Remote'
+        elif job['is_hybrid']:
+            return 'Hybrid'
+        else:
+            return 'On-site'
 
     @staticmethod
     def sanitize_string(s: Optional[str]) -> str:
-        return s.replace(", ", " - ") if s else 'N/A'
+        if not s:
+            return 'N/A'
+        return ' '.join(s.replace('\n', ' ').split())
 
     @staticmethod
     def get_job_location(job: Dict[str, Any]) -> str:

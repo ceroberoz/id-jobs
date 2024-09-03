@@ -75,6 +75,26 @@ def adjust_column_widths(spreadsheet_id):
     service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
     print("Column widths, conditional formatting, and filter view adjusted successfully.")
 
+def clear_sheet(service, spreadsheet_id):
+    sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    properties = sheet_metadata.get('sheets', [])[0].get('properties', {})
+    sheet_id = properties.get('sheetId', 0)
+
+    requests = [{
+        "updateCells": {
+            "range": {
+                "sheetId": sheet_id,
+            },
+            "fields": "userEnteredValue"
+        }
+    }]
+
+    body = {
+        'requests': requests
+    }
+    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+    print("Sheet cleared successfully.")
+
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
     adjust_column_widths(spreadsheet_id)

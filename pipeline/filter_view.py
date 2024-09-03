@@ -13,7 +13,7 @@ def create_filter_view():
                     "startRowIndex": 0,
                     "endRowIndex": 50000,
                     "startColumnIndex": 0,
-                    "endColumnIndex": 16
+                    "endColumnIndex": 17
                 },
                 "criteria": {
                     "0": {
