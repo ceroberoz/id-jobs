@@ -48,7 +48,7 @@ initialize_merged_file
 # softwareone
 # tiket
 # vidio
-skip_spiders=("goto" "dealls" "evermos" "jobstreet" "tiket" "vidio")
+skip_spiders=("goto")
 
 # Process spider files
 found_files=false
