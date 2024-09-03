@@ -22,7 +22,7 @@ def setup_credentials():
         raise ValueError("Invalid JSON in GCP_JSON environment variable")
 
 def create_conditional_formatting_rules():
-    """Create conditional formatting rules for the sheet."""
+    """Create conditional formatting rules for the sheet with updated colors."""
     return [
         {
             "addConditionalFormatRule": {
@@ -45,14 +45,45 @@ def create_conditional_formatting_rules():
                         },
                         "format": {
                             "backgroundColor": {
-                                "red": 0.6,
-                                "green": 1.0,
-                                "blue": 0.6
+                                "red": 0.7,
+                                "green": 0.9,
+                                "blue": 0.7
                             }
                         }
                     }
                 },
                 "index": 0
+            }
+        },
+        {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [
+                        {
+                            "sheetId": 0,
+                            "startRowIndex": 1,
+                            "endRowIndex": 50000,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 1
+                        }
+                    ],
+                    "booleanRule": {
+                        "condition": {
+                            "type": "CUSTOM_FORMULA",
+                            "values": [
+                                {"userEnteredValue": '=$A2="hot"'}
+                            ]
+                        },
+                        "format": {
+                            "backgroundColor": {
+                                "red": 1.0,
+                                "green": 0.8,
+                                "blue": 0.4
+                            }
+                        }
+                    }
+                },
+                "index": 1
             }
         },
         {
@@ -76,14 +107,14 @@ def create_conditional_formatting_rules():
                         },
                         "format": {
                             "backgroundColor": {
-                                "red": 1.0,
-                                "green": 1.0,
-                                "blue": 0.6
+                                "red": 0.6,
+                                "green": 0.8,
+                                "blue": 1.0
                             }
                         }
                     }
                 },
-                "index": 0
+                "index": 2
             }
         },
         {
@@ -102,19 +133,50 @@ def create_conditional_formatting_rules():
                         "condition": {
                             "type": "CUSTOM_FORMULA",
                             "values": [
-                                {"userEnteredValue": '=$A2="stale"'}
+                                {"userEnteredValue": '=$A2="aging"'}
                             ]
                         },
                         "format": {
                             "backgroundColor": {
-                                "red": 1.0,
-                                "green": 0.6,
-                                "blue": 0.6
+                                "red": 0.95,
+                                "green": 0.95,
+                                "blue": 0.95
                             }
                         }
                     }
                 },
-                "index": 0
+                "index": 3
+            }
+        },
+        {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [
+                        {
+                            "sheetId": 0,
+                            "startRowIndex": 1,
+                            "endRowIndex": 50000,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": 1
+                        }
+                    ],
+                    "booleanRule": {
+                        "condition": {
+                            "type": "CUSTOM_FORMULA",
+                            "values": [
+                                {"userEnteredValue": '=$A2="old"'}
+                            ]
+                        },
+                        "format": {
+                            "backgroundColor": {
+                                "red": 0.9,
+                                "green": 0.9,
+                                "blue": 0.9
+                            }
+                        }
+                    }
+                },
+                "index": 4
             }
         },
         {
@@ -138,14 +200,14 @@ def create_conditional_formatting_rules():
                         },
                         "format": {
                             "backgroundColor": {
-                                "red": 0.8,
-                                "green": 0.8,
-                                "blue": 0.8
+                                "red": 0.85,
+                                "green": 0.85,
+                                "blue": 0.85
                             }
                         }
                     }
                 },
-                "index": 0
+                "index": 5
             }
         }
     ]
@@ -270,5 +332,5 @@ def adjust_column_widths(spreadsheet_id):
     print("Column widths, conditional formatting, and filter view adjusted successfully.")
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
     adjust_column_widths(spreadsheet_id)

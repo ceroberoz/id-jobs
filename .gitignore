@@ -2,6 +2,7 @@
 output
 .pip_cache
 simulate_workflow.sh
+google_sheets_uploader
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

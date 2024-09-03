@@ -19,6 +19,21 @@ id-jobs uses advanced web scraping techniques to gather job listings from variou
 
 🇮🇩 **Note:** id-jobs is specifically designed for the Indonesian job market.
 
+## Job Age Color Guidelines
+
+To help users quickly identify the freshness of job listings, we use a color-coded system based on the job's age:
+
+| Job Age Category | Time Range | Color | Description |
+|------------------|------------|-------|-------------|
+| New | <= 1 day | ![#B3E6B3](https://via.placeholder.com/15/B3E6B3/000000?text=+) Bright Light Green | Most recent and attractive opportunities |
+| Hot | 1 to 7 days | ![#FFCC66](https://via.placeholder.com/15/FFCC66/000000?text=+) Warm Light Orange | Very recent and appealing listings |
+| Recent | 8 to 15 days | ![#99CCFF](https://via.placeholder.com/15/99CCFF/000000?text=+) Light Blue | Still fresh and noteworthy opportunities |
+| Aging | 16 to 21 days | ![#F2F2F2](https://via.placeholder.com/15/F2F2F2/000000?text=+) Very Light Gray | Older listings, less priority |
+| Old | 22 to 30 days | ![#E6E6E6](https://via.placeholder.com/15/E6E6E6/000000?text=+) Light Gray | Significantly older listings, low priority |
+| Expired | > 30 days | ![#D9D9D9](https://via.placeholder.com/15/D9D9D9/000000?text=+) Medium Gray | Outdated listings, likely no longer active |
+
+This color scheme is designed to guide users towards the most recent job opportunities while de-emphasizing older listings.
+
 ## How It Works
 
 id-jobs automatically visits Indonesian job websites, collects relevant information, and organizes it in a single spreadsheet.

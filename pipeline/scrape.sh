@@ -38,8 +38,17 @@ process_spider_file() {
 initialize_merged_file
 
 # Array of spiders to skip (manually filled)
-# Exclude goto because it's not a real spider
-skip_spiders=("goto")
+# All of these spiders are listed on the google sheet
+# blibli
+# dealls
+# evermos
+# goto #TODO: Add back goto
+# jobstreet
+# kalibrr
+# softwareone
+# tiket
+# vidio
+skip_spiders=("goto" "dealls" "evermos" "jobstreet" "tiket" "vidio")
 
 # Process spider files
 found_files=false
