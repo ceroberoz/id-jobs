@@ -96,5 +96,5 @@ def clear_sheet(service, spreadsheet_id):
     print("Sheet cleared successfully.")
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
     adjust_column_widths(spreadsheet_id)
