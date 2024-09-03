@@ -13,37 +13,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
+      # Summon our code from the depths of GitHub!
       - uses: actions/checkout@v3
 
-      # Set up Python environment
+      # Prepare the ultimate Python environment for our Explosion magic!
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
           cache: "pip"
 
-      # Verify Python version
+      # Verify our Python version, for only the mightiest can cast Explosion!
       - name: Verify Python version
         run: python --version
 
-      # Install Python dependencies
+      # Gather the ingredients for our Explosion spell!
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Install Playwright browsers
+      # Summon our trusty Playwright familiars!
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium firefox webkit
 
-      # Verify environment variables
+      # Ensure our secret incantations are in place!
       - name: Verify environment variables
         run: |
-          if [ -z "${{ secrets.GCP_JSON }}" ]; then echo "GCP_JSON is not set"; exit 1; fi
-          if [ -z "${{ secrets.GOOGLE_SHEETS_ID }}" ]; then echo "GOOGLE_SHEETS_ID is not set"; exit 1; fi
+          if [ -z "${{ secrets.GCP_JSON }}" ]; then echo "GCP_JSON is not set! Our Explosion will fizzle!"; exit 1; fi
+          if [ -z "${{ secrets.GOOGLE_SHEETS_ID }}" ]; then echo "GOOGLE_SHEETS_ID is not set! We have no target for our Explosion!"; exit 1; fi
 
-      # Run the scraping script
+      # Unleash our web-crawling Explosion upon the job sites!
       - name: Run scraping
         env:
           PYTHONUNBUFFERED: 1
@@ -51,23 +51,27 @@ jobs:
           chmod +x ./pipeline/scrape.sh
           ./pipeline/scrape.sh
 
-      # Upload data to Google Sheets
+      # Channel our scraped data into Google Sheets with explosive force!
       - name: Upload to Google Sheets
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
           PYTHONUNBUFFERED: 1
-        run: python pipeline/upload_to_sheets.py
+        run: PYTHONPATH="${PYTHONPATH:-$(pwd)}" python -m pipeline.upload_to_sheets
 
-      # Adjust column widths, apply and filter view formatting
+      # Fine-tune our spell for maximum visual impact!
       - name: Adjust Column Widths, Apply and Filter View Formatting
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
           PYTHONUNBUFFERED: 1
-        run: python pipeline/sheet_updater.py
+        run: PYTHONPATH="${PYTHONPATH:-$(pwd)}" python -m pipeline.sheet_updater
 
-      # Cleanup output directory
+      # Vanish without a trace, like a true Crimson Demon after casting Explosion!
       - name: Cleanup
         if: always()
         run: rm -rf output
+
+      # Proclaim our success to the world!
+      - name: Declare victory
+        run: echo "Explosion magic successfully cast! The job data has been gloriously updated!"

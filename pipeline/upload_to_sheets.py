@@ -175,7 +175,7 @@ def upload_to_sheets(service, spreadsheet_id, data):
 
 def main():
     creds = setup_credentials()
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
 
     print(f"Attempting to access spreadsheet with ID: {spreadsheet_id}")
 

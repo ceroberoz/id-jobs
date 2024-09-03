@@ -10,13 +10,17 @@ from googleapiclient.errors import HttpError
 import sys
 from pathlib import Path
 
+# Add the project root directory to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
 # Remove or comment out this line:
 # sys.path.append(str(Path(__file__).parent.parent))
 
 # Replace the imports with consistent relative imports:
-from .column_widths import get_column_widths
-from .conditional_formatting import create_conditional_formatting_rules
-from .filter_view import create_filter_view, delete_existing_filter_view
+from pipeline.column_widths import get_column_widths
+from pipeline.conditional_formatting import create_conditional_formatting_rules
+from pipeline.filter_view import create_filter_view, delete_existing_filter_view
 
 def get_env_var(var_name):
     """Retrieve environment variable or raise an error if not set."""
@@ -72,5 +76,5 @@ def adjust_column_widths(spreadsheet_id):
     print("Column widths, conditional formatting, and filter view adjusted successfully.")
 
 if __name__ == "__main__":
-    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID_DEV')
+    spreadsheet_id = get_env_var('GOOGLE_SHEETS_ID')
     adjust_column_widths(spreadsheet_id)
