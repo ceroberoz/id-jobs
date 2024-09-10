@@ -41,7 +41,7 @@ matplotlib-inline==0.1.6
 packaging==24.1  # Updated from 23.2
 parsel==1.8.1
 parso==0.8.3
-pexpect==4.8.0
+pexpect==4.9.0
 pickleshare==0.7.5
 prompt-toolkit==3.0.41
 Protego==0.3.0
