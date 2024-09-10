@@ -31,7 +31,7 @@ filelock==3.13.1
 greenlet==3.0.1
 hyperlink==21.0.0
 idna==3.4
-incremental==22.10.0
+incremental==24.7.2
 itemadapter==0.8.0
 itemloaders==1.1.0
 jedi==0.19.1
