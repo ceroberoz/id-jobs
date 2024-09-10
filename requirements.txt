@@ -7,7 +7,7 @@ google-auth-httplib2==0.1.1
 
 # Scrapy and related packages
 Scrapy==2.11.0
-Twisted==22.10.0  # Compatible with Scrapy 2.11.0
+Twisted==24.7.0  # Compatible with Scrapy 2.11.0
 scrapy-playwright==0.0.33
 playwright==1.40.0
 
