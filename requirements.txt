@@ -27,7 +27,7 @@ cryptography==41.0.5  # Keep this version to avoid breaking changes
 cssselect==1.2.0
 decorator==5.1.1
 executing==2.0.1
-filelock==3.13.1
+filelock==3.16.0
 greenlet==3.0.3  # Keep this version as previously updated
 hyperlink==21.0.0
 idna==3.4
