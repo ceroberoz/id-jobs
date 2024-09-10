@@ -44,7 +44,7 @@ parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
 prompt-toolkit==3.0.41
-Protego==0.3.0
+Protego==0.3.1
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pyasn1==0.5.0
