@@ -6,7 +6,7 @@ google-auth-oauthlib==1.1.0
 google-auth-httplib2==0.1.1
 
 # Scrapy and related packages
-Scrapy==2.11.0
+Scrapy==2.11.2
 Twisted==22.10.0  # Keep this version to avoid breaking changes
 scrapy-playwright==0.0.33
 playwright==1.40.0
