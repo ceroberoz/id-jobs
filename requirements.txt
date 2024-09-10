@@ -12,7 +12,7 @@ scrapy-playwright==0.0.33
 playwright==1.40.0
 
 # IPython for interactive development
-ipython==8.17.2
+ipython==8.27.0
 
 # Other dependencies
 asttokens==2.4.1
