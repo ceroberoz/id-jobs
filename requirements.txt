@@ -38,7 +38,7 @@ jedi==0.19.1
 jmespath==1.0.1
 lxml==4.9.3
 matplotlib-inline==0.1.6
-packaging==23.2
+packaging==24.1
 parsel==1.8.1
 parso==0.8.3
 pexpect==4.8.0
