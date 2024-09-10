@@ -14,11 +14,18 @@ jobs:
 
     steps:
       # Summon our code from the depths of GitHub!
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      # Create a new development branch for PRs
+      - name: Create development branch for PRs
+        if: github.event_name == 'pull_request'
+        run: |
+          git checkout -b development-${{ github.event.pull_request.number }}
+          git push -u origin development-${{ github.event.pull_request.number }}
 
       # Prepare the ultimate Python environment for our Explosion magic!
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
@@ -75,3 +82,13 @@ jobs:
       # Proclaim our success to the world!
       - name: Declare victory
         run: echo "Explosion magic successfully cast! The job data has been gloriously updated!"
+
+      # Commit changes to the development branch
+      - name: Commit changes
+        if: github.event_name == 'pull_request'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "💥 Explosive update from PR #${{ github.event.pull_request.number }}" || echo "No changes to commit"
+          git push origin development-${{ github.event.pull_request.number }}
