@@ -30,7 +30,7 @@ executing==2.0.1
 filelock==3.13.1
 greenlet==3.0.3  # Keep this version as previously updated
 hyperlink==21.0.0
-idna==3.4
+idna==3.8
 incremental==24.7.2  # Keep this version as previously updated
 itemadapter==0.8.0
 itemloaders==1.1.0
