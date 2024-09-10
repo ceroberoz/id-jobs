@@ -14,6 +14,8 @@ updates:
     ignore:
       - dependency-name: "twisted"
       - dependency-name: "cryptography"
+      - dependency-name: "greenlet"
+      - dependency-name: "pyee"
 
   # Update GitHub Actions
   - package-ecosystem: "github-actions"
