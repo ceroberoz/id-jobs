@@ -103,4 +103,4 @@ Now go forth and explode your job search with the power of id-jobs! 💥🎆
 
 Note: I let "Megumin AI" write this readme.
 
-![alt text](megumin-pose-megumin-konosuba.mp4)
+![alt text](megumin-victory-pose.gif)
