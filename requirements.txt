@@ -16,7 +16,7 @@ ipython==8.27.0  # Keep this version as previously updated
 
 # Other dependencies
 asttokens==2.4.1
-attrs==23.1.0
+attrs==24.2.0
 Automat==24.8.1  # Keep this version as previously updated
 backcall==0.2.0
 certifi==2023.11.17
