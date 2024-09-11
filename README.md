@@ -8,13 +8,12 @@
 
 ## 🎆 What's New in Our Latest Explosion? 🎆
 
-- **Flip Jobs Integration**: Unleashed the power to scrape job listings from Flip's career portal!
-- **Karir.com API Mastery**: Harnessed the arcane energies of Karir.com's API for maximum job data extraction!
-- **Explosive Pagination**: Implemented a pagination system that blasts through ALL available job opportunities!
-- **Work Arrangement Tracking**: Identify Remote, Hybrid, and On-site opportunities with pinpoint accuracy!
-- **Job Apply End Date Calculation**: Automatically determine application deadlines with magical precision!
-- **Enhanced Data Sanitization**: Improved our pre-upload cleansing rituals for purer, more potent data!
-- **Job Age Tracking**: Monitor the age of job listings to pinpoint the freshest opportunities!
+- **Kredivo Integration**: Unleashed the power to scrape job listings from Kredivo's career portal with explosive precision!
+- **Karir.com Pagination Mastery**: Implemented an unstoppable pagination system that blasts through ALL available job opportunities on Karir.com!
+- **Enhanced Data Sanitization**: Improved our pre-upload cleansing rituals for job titles and types, ensuring purer, more potent data!
+- **Work Arrangement Detection**: Automatically identify Remote and On-site opportunities with magical accuracy!
+- **Job Level Extraction**: Implemented arcane algorithms to determine job levels from titles!
+- **Explosive Error Handling**: Fortified our spiders with robust error containment spells, ensuring smooth operation even in chaotic data environments!
 
 ## 🌋 Overview
 
@@ -41,6 +40,11 @@ Quickly identify the freshness of job listings with our color-coded system, insp
 
 id-jobs automatically casts its net wide, visiting Indonesian job websites with the precision of a perfectly aimed Explosion spell. It collects relevant information and organizes it into a single, powerful spreadsheet. The data undergoes rigorous magical cleansing and formatting before being uploaded, ensuring consistency and readability worthy of the finest spell books.
 
+Our latest enhancements include:
+- Explosive pagination for comprehensive data collection
+- Advanced string sanitization for cleaner, more consistent job data
+- Intelligent work arrangement and job level detection
+
 ![The Explosive Scraping Process](how-scraper-works.gif)
 
 ## 🔮 Preview
@@ -51,7 +55,7 @@ Behold, a glimpse into the arcane power of id-jobs data:
 
 ## 🚀 Why Harness the Power of id-jobs?
 
-Navigating the labyrinth of job opportunities in Indonesia can be as challenging as mastering Explosion magic. id-jobs simplifies this quest by consolidating information from multiple realms (websites) into one central grimoire (spreadsheet), providing additional insights such as work arrangements and application deadlines that even Megumin would approve of!
+Navigating the labyrinth of job opportunities in Indonesia can be as challenging as mastering Explosion magic. id-jobs simplifies this quest by consolidating information from multiple realms (websites) into one central grimoire (spreadsheet), providing additional insights such as work arrangements, job levels, and application deadlines that even Megumin would approve of!
 
 ## 📚 Tomes of Knowledge (Data Sources)
 
@@ -60,11 +64,12 @@ We gather our arcane knowledge from a wide range of sources, each represented by
 - Blibli 🛒
 - Dealls 🤝
 - Evermos 🌟
-- Flip 💳 (New!)
+- Flip 💳
 - GoTo 🚗
 - Jobstreet 💼
 - Kalibrr 🎓
-- Karir.com 🌐 (New!)
+- Karir.com 🌐
+- Kredivo 💰 (New!)
 - SoftwareOne 💻
 - Tiket ✈️
 - Various company career portals 🏢
@@ -77,6 +82,7 @@ Each of these sources is a realm of opportunity, waiting to be explored by our j
 
 - **Daily Explosions of Updates**: Automated daily updates through CI/CD pipelines that would make any archmage jealous.
 - **Work Arrangement Scrying**: Identify Remote, Hybrid, and On-site opportunities with crystal-clear clarity.
+- **Job Level Divination**: Automatically determine job levels from titles, providing deeper insights into career opportunities.
 - **Application Deadline Divination**: Calculated end dates for job applications, because timing is everything in both magic and job hunting.
 - **Optimized Data Collection Rituals**: Improved accuracy and coverage of job listings, leaving no stone unturned.
 - **User-Friendly Spell Interface**: Access job data through a Google Sheets interface so intuitive, even a novice wizard could use it.
@@ -98,9 +104,3 @@ id-jobs is open source under the GPL-3.0 license. You're free to use, modify, an
 We always respect website terms of service when collecting data, because even the most powerful wizards need to follow the rules of the realms they visit.
 
 Now go forth and explode your job search with the power of id-jobs! 💥🎆
-
----
-
-Note: I let "Megumin AI" write this readme.
-
-![alt text](megumin-victory-pose.gif)
