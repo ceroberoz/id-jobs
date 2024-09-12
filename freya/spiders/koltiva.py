@@ -39,7 +39,7 @@ class KoltivaSpider(scrapy.Spider):
             'job_title': self.sanitize_string(job_data['position_name'], is_title=True),
             'job_location': f"{self.sanitize_string(job_data['unit_name'])} - {self.sanitize_string(job_data['country_name'])}",
             'job_department': self.sanitize_string(job_data['unitsec_name']),
-            'job_url': f"{self.BASE_URL}/job/{job_data['slug']}",
+            'job_url': f"{self.BASE_URL}/list-job/{job_data['slug']}",
             'first_seen': first_seen,
             'base_salary': 'N/A',
             'job_type': self.sanitize_string(job_data['work_period_name'], is_job_type=True),
