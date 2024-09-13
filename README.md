@@ -19,6 +19,7 @@
 id-jobs collects job listings from Indonesian job portals and company websites, respecting each site's terms of service.
 
 **View the Data on Google Sheets:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
+
 **View the Dasboard on LookerStudio by Google:** [https://s.id/id-jobs-dashboard](https://s.id/id-jobs-dashboard)
 
 ## 🎨 Job Age Colors
