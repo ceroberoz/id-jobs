@@ -2,27 +2,33 @@ import scrapy
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
-from freya.pipelines import calculate_job_age  # Import the function
+from freya.pipelines import calculate_job_age
 from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
-class VidioSpiderXPath(scrapy.Spider):
-    name = 'vidio'
-    BASE_URL = 'https://careers.vidio.com'
-    CAREERS_URL = f"{BASE_URL}/careers"
+class MekariSpider(scrapy.Spider):
+    name = 'mekari'
+    BASE_URL = 'https://mekari.hire.trakstar.com'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def start_requests(self):
-        yield scrapy.Request(self.CAREERS_URL, meta={"playwright": True}, callback=self.parse)
+        yield scrapy.Request(
+            self.BASE_URL,
+            headers={
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.188 Safari/537.36 CrKey/1.54.250320'
+            },
+            callback=self.parse
+        )
 
     def parse(self, response):
         try:
-            for selector in response.xpath('//div[contains(@class, "b-job")]/a'):
-                yield self.parse_job(selector)
+            for job in response.css('div.js-card.list-item'):
+                yield self.parse_job(job)
 
             self.handle_pagination(response)
         except Exception as e:
@@ -30,46 +36,43 @@ class VidioSpiderXPath(scrapy.Spider):
 
     def parse_job(self, selector) -> Dict[str, Any]:
         first_seen = self.timestamp
-        last_seen = self.timestamp  # use current timestamp as baseline
+        last_seen = self.timestamp
+
+        job_title = self.sanitize_string(selector.css('h3.js-job-list-opening-name::text').get())
+        job_location = self.sanitize_string(selector.css('div.js-job-list-opening-loc::text').get())
+        job_department = self.sanitize_string(selector.css('div.col-md-4.col-xs-12 div.rb-text-4:first-child::text').get())
+        job_type = self.sanitize_string(selector.css('div.js-job-list-opening-meta span:first-child::text').get())
+        work_arrangement = self.sanitize_string(selector.css('div.js-job-list-opening-meta span:last-child::text').get())
+
+        job_url = self.BASE_URL + selector.css('a::attr(href)').get()
 
         return {
-            'job_title': self.sanitize_string(selector.css('.b-job__name::text').get()),
-            'job_location': self.sanitize_string(selector.css('.b-job__location::text').get()),
-            'job_department': self.sanitize_string(selector.css('.b-job__department::text').get()),
-            'job_url': self.get_job_url(selector),
+            'job_title': job_title,
+            'job_location': job_location,
+            'job_department': job_department,
+            'job_url': job_url,
             'first_seen': first_seen,
             'base_salary': 'N/A',
-            'job_type': 'N/A',
+            'job_type': job_type,
             'job_level': 'N/A',
             'job_apply_end_date': calculate_job_apply_end_date(last_seen),
             'last_seen': last_seen,
             'is_active': 'True',
-            'company': 'Vidio',
+            'company': 'Mekari',
             'company_url': self.BASE_URL,
-            'job_board': 'Vidio',
-            'job_board_url': self.CAREERS_URL,
-            'job_age': calculate_job_age(first_seen, last_seen), # Ensure this line is present
-            'work_arrangement': '', # TODO: Check if this is the correct work arrangement
+            'job_board': 'Mekari',
+            'job_board_url': self.BASE_URL,
+            'job_age': calculate_job_age(first_seen, last_seen),
+            'work_arrangement': work_arrangement,
         }
-
-    def get_job_url(self, selector) -> str:
-        return self.BASE_URL + selector.css('a::attr(href)').get()
 
     @staticmethod
     def sanitize_string(s: Optional[str]) -> str:
-        return s.strip() if s else 'N/A'
+        if s:
+            return ' - '.join(part.strip() for part in s.split(',') if part.strip())
+        return 'N/A'
 
     def handle_pagination(self, response):
-        next_page_url = response.xpath('//li[@class="next"]/a/@href').get()
-        if next_page_url:
-            yield scrapy.Request(response.urljoin(next_page_url), callback=self.parse)
-
-    # Reserved for future use
-    # def get_job_id(self, selector) -> str:
-    #     return selector.attrib.get('id', '').replace('career_', '')
-
-    # def get_number_of_openings(self, selector) -> str:
-    #     openings_text = selector.css('.b-job__openings::text').get()
-    #     if openings_text:
-    #         return openings_text.split()[0]
-    #     return 'N/A'
+        next_page = response.css('ul.pagination li.page-item:last-child a::attr(href)').get()
+        if next_page:
+            yield scrapy.Request(response.urljoin(next_page), callback=self.parse)
