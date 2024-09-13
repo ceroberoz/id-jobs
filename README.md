@@ -8,17 +8,18 @@
 
 ## 🆕 Latest Updates
 
-- Added Koltiva job listings
-- Improved Karir.com data collection
-- Enhanced data cleaning for job titles and types
-- Added work arrangement and job level detection
-- Improved error handling
+- Added Mekari job listings
+- Implemented Playwright for improved JavaScript rendering and pagination handling
+- Enhanced Kredivo spider with better data extraction
+- Improved error handling and logging
+- Optimized pagination logic for better performance
 
 ## 📊 Overview
 
 id-jobs collects job listings from Indonesian job portals and company websites, respecting each site's terms of service.
 
-**View the Data:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
+**View the Data on Google Sheets:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
+**View the Dasboard on LookerStudio by Google:** [https://s.id/id-jobs-dashboard](https://s.id/id-jobs-dashboard)
 
 ## 🎨 Job Age Colors
 
@@ -30,9 +31,10 @@ id-jobs collects job listings from Indonesian job portals and company websites, 
 | Aging | 16-21 days | ![#E6E6E6](https://via.placeholder.com/15/E6E6E6/000000?text=+) Light Gray |
 | Old | 22-30 days | ![#CCCCCC](https://via.placeholder.com/15/CCCCCC/000000?text=+) Medium Gray |
 | Expired | > 30 days | ![#B3B3B3](https://via.placeholder.com/15/B3B3B3/000000?text=+) Dark Gray |
+
 ## 🔧 How It Works
 
-id-jobs automatically collects job data from various websites, cleans the information, and compiles it into a single spreadsheet.
+id-jobs automatically collects job data from various websites, cleans the information, and compiles it into a single spreadsheet. We now use Playwright for sites with complex JavaScript rendering.
 
 ![Scraping Process](how-scraper-works.gif)
 
@@ -47,7 +49,7 @@ id-jobs simplifies job searching by gathering information from multiple sources 
 ## 📚 Data Sources
 
 We collect data from various job portals and company websites, including:
-Blibli, Dealls, Evermos, Flip, GoTo, Jobstreet, Kalibrr, Karir.com, Kredivo, SoftwareOne, Tiket, and more.
+Blibli, Dealls, Evermos, Flip, GoTo, Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, and more.
 
 ## 🚀 Features
 
@@ -58,6 +60,8 @@ Blibli, Dealls, Evermos, Flip, GoTo, Jobstreet, Kalibrr, Karir.com, Kredivo, Sof
 - Improved data accuracy
 - User-friendly Google Sheets interface
 - Job age tracking
+- JavaScript-rendered content handling with Playwright
+- Efficient pagination across multiple pages
 
 ## 🏁 Getting Started
 
