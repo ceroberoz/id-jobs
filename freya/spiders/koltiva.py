@@ -19,10 +19,20 @@ class KoltivaSpider(scrapy.Spider):
 
     def start_requests(self):
         headers = {
-            'accept': 'application/json, text/plain, */*',
-            'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBzYW5qYXlhLndvcmtAZ21haWwuY29tIiwiaWF0IjoxNzI2MTI5NTIwfQ.4NDbf50RCpgcpQ8tz2oPBULtom0o-A5JgJOjDOHXtIY',
-            'origin': 'https://career.koltiva.com',
-            'user-agent': 'Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.188 Safari/537.36 CrKey/1.54.250320'
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'Origin': 'https://career.koltiva.com',
+            'Connection': 'keep-alive',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'cross-site',
+            'DNT': '1',
+            'Sec-GPC': '1',
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache',
+            'TE': 'trailers'
         }
         yield scrapy.Request(self.API_URL, headers=headers, callback=self.parse)
 
