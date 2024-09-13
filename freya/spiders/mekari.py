@@ -1,4 +1,5 @@
 import scrapy
+from scrapy_playwright.page import PageMethod
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -18,21 +19,37 @@ class MekariSpider(scrapy.Spider):
     def start_requests(self):
         yield scrapy.Request(
             self.BASE_URL,
-            headers={
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-                'User-Agent': 'Mozilla/5.0 (X11; Linux aarch64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.188 Safari/537.36 CrKey/1.54.250320'
+            meta={
+                "playwright": True,
+                "playwright_include_page": True,
+                "playwright_page_methods": [
+                    PageMethod("wait_for_selector", "div.js-card.list-item"),
+                ]
             },
             callback=self.parse
         )
 
-    def parse(self, response):
-        try:
-            for job in response.css('div.js-card.list-item'):
-                yield self.parse_job(job)
+    async def parse(self, response):
+        page = response.meta["playwright_page"]
 
-            self.handle_pagination(response)
+        try:
+            while True:
+                for job in response.css('div.js-card.list-item'):
+                    yield self.parse_job(job)
+
+                next_button = await page.query_selector('ul.pagination li.page-item:last-child a.page-link[href*="/?p="]')
+                if next_button:
+                    await next_button.click()
+                    await page.wait_for_load_state("networkidle")
+                    response = await page.content()
+                    response = scrapy.http.HtmlResponse(url=page.url, body=response, encoding='utf-8')
+                else:
+                    break
+
         except Exception as e:
             logger.error(f"Error parsing page: {e}")
+        finally:
+            await page.close()
 
     def parse_job(self, selector) -> Dict[str, Any]:
         first_seen = self.timestamp
@@ -71,8 +88,3 @@ class MekariSpider(scrapy.Spider):
         if s:
             return ' - '.join(part.strip() for part in s.split(',') if part.strip())
         return 'N/A'
-
-    def handle_pagination(self, response):
-        next_page = response.css('ul.pagination li.page-item:last-child a::attr(href)').get()
-        if next_page:
-            yield scrapy.Request(response.urljoin(next_page), callback=self.parse)
