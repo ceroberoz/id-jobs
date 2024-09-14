@@ -181,7 +181,7 @@ def sanitize_job_type(job_type):
         return job_type.capitalize()
 
 def sanitize_work_arrangement(arrangement):
-    if arrangement in ('Not specified', 'nan', 'False'):
+    if arrangement in ('Not specified', 'nan', 'False', 'Tidak Disebutkan'):
         return 'Not specified'
 
     arrangement = str(arrangement).lower()
@@ -206,17 +206,42 @@ def sanitize_work_arrangement(arrangement):
         return arrangement.capitalize()
 
 def sanitize_job_level(job_level):
-    if job_level in ('Not specified', 'nan'):
+    if job_level in ('Not specified', 'nan', 'Tidak Disebutkan'):
         return 'Not specified'
 
     job_level = str(job_level).lower()
 
-    entry_level = {'fresh graduate', 'intern', 'internship', 'undergraduate', 'entry level', 'junior'}
-    mid_level = {'specialist', 'professional', 'lead', 'mid level', 'intermediate'}
-    senior_level = {'senior', 'senior officer', 'expert'}
-    manager_level = {'manager', 'supervisor', 'team lead'}
-    director_level = {'director', 'head', 'head of department', 'vp', 'vice president'}
-    executive_level = {'c-level', 'executive', 'ceo', 'cto', 'cfo'}
+    entry_level = {
+        'fresh graduate', 'intern', 'internship', 'undergraduate', 'entry level', 'junior',
+        'pemula / staf', 'pemula / staf - staf senior', 'pemula / staf - supervisor'
+    }
+    mid_level = {
+        'specialist', 'professional', 'lead', 'mid level', 'intermediate',
+        'staf senior', 'supervisor', 'asisten manajer',
+        'staf senior - supervisor', 'supervisor - asisten manajer',
+        'pemula / staf - staf senior - supervisor', 'pemula / staf - staf senior - asisten manajer',
+        'staf senior - supervisor - asisten manajer'
+    }
+    senior_level = {
+        'senior', 'senior officer', 'expert',
+        'asisten manajer senior', 'supervisor - asisten manajer - asisten manajer senior'
+    }
+    manager_level = {
+        'manager', 'supervisor', 'team lead',
+        'manajer - departemen', 'manajer - cabang/regional',
+        'asisten manajer - manajer - departemen',
+        'supervisor - manajer - departemen'
+    }
+    director_level = {
+        'director', 'head', 'head of department', 'vp', 'vice president',
+        'manajer senior', 'manajer - departemen - manajer senior',
+        'manajer - cabang/regional - manajer senior',
+        'asisten manajer senior - manajer senior'
+    }
+    executive_level = {
+        'c-level', 'executive', 'ceo', 'cto', 'cfo',
+        'kepala unit bisnis'
+    }
 
     if any(level in job_level for level in entry_level):
         return 'Entry Level'

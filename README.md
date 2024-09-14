@@ -8,11 +8,11 @@
 
 ## 🆕 Latest Updates
 
-- Added Mekari job listings
 - Implemented Playwright for improved JavaScript rendering and pagination handling
-- Enhanced Kredivo spider with better data extraction
+- Enhanced Karir spider with better data extraction
 - Improved error handling and logging
 - Optimized pagination logic for better performance
+- Updated data processing pipeline for increased efficiency
 
 ## 📊 Overview
 

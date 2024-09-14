@@ -7,6 +7,7 @@ import random
 from freya.pipelines import calculate_job_age
 from freya.utils import calculate_job_apply_end_date
 
+# Set up the logger for this spider
 logger = logging.getLogger(__name__)
 
 class KarirSpiderJson(scrapy.Spider):
@@ -23,10 +24,12 @@ class KarirSpiderJson(scrapy.Spider):
     ]
 
     def __init__(self, *args, **kwargs):
+        # Initialize the spider and set the current timestamp
         super().__init__(*args, **kwargs)
-        self.timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def start_requests(self):
+        # Start the scraping process by sending the initial request
         headers = {
             'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'en-US,en;q=0.9',
@@ -39,7 +42,7 @@ class KarirSpiderJson(scrapy.Spider):
             'dnt': '1',
             'sec-gpc': '1'
         }
-        
+
         payload = self.get_payload(0)  # Start with offset 0
 
         yield scrapy.Request(
@@ -51,6 +54,7 @@ class KarirSpiderJson(scrapy.Spider):
         )
 
     def get_payload(self, offset):
+        # Create the payload for the API request
         return {
             "keyword":"*",
             "location_ids":[],
@@ -80,14 +84,24 @@ class KarirSpiderJson(scrapy.Spider):
             total_opportunities = data['data']['total_opportunities']
 
             for opportunity in opportunities:
-                yield self.parse_job(opportunity)
+                yield scrapy.Request(
+                    f"https://karir.com/_next/data/3t_6puNZeaT81JcSVqzwu/opportunities/{opportunity['id']}.json?index={opportunity['id']}",
+                    headers={
+                        'User-Agent': random.choice(self.USER_AGENTS),
+                        'Accept': '*/*',
+                        'Referer': 'https://karir.com/search-lowongan?keyword=*'
+                    },
+                    callback=self.parse_job_details,
+                    meta={'job': opportunity}
+                )
 
-            # Explosive pagination!
+            # Handle pagination
             current_offset = json.loads(response.request.body)['offset']
             next_offset = current_offset + self.LIMIT
 
             if next_offset < total_opportunities:
-                logger.info(f"💥 EXPLOSION! Fetching next page. Current progress: {next_offset}/{total_opportunities} 💥")
+                # Log progress: show how many jobs have been processed out of the total
+                logger.info(f"Progress update: Processed {next_offset} out of {total_opportunities} jobs")
                 yield scrapy.Request(
                     self.BASE_URL,
                     method='POST',
@@ -96,51 +110,58 @@ class KarirSpiderJson(scrapy.Spider):
                     callback=self.parse
                 )
             else:
-                logger.info("🎆 ULTIMATE EXPLOSION! All job opportunities have been obliterated... I mean, scraped! 🎆")
+                # Log completion: all jobs have been processed
+                logger.info(f"Finished processing all {total_opportunities} jobs")
 
         except json.JSONDecodeError as e:
-            logger.error(f"💔 Error decoding JSON: {e}")
-            logger.debug(f"Response content: {response.text}")
+            # Log error: couldn't understand the JSON response
+            logger.error(f"Couldn't read the JSON response: {e}")
+            logger.debug(f"The response we couldn't understand: {response.text}")
         except Exception as e:
-            logger.error(f"💥 Unexpected error: {e}")
+            # Log error: something unexpected went wrong
+            logger.error(f"An unexpected problem occurred: {e}")
 
-    def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
-        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
-        last_seen = self.format_datetime(job['posted_at'])
-        
-        return {
-            'job_title': self.sanitize_string(job['job_position']),
-            'job_location': self.sanitize_string(job['description']),
-            'job_department': 'N/A',  # Not provided in the response
-            'job_url': f"https://karir.com/opportunities/{job['id']}",  # Assuming this is the correct URL format
-            'first_seen': first_seen,
-            'base_salary': self.get_salary_info(job),
-            'job_type': 'N/A',  # Not provided in the response
-            'job_level': 'N/A',  # Not provided in the response
-            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
-            'last_seen': last_seen,
-            'is_active': 'True',
-            'company': self.sanitize_string(job['company_name']),
-            'company_url': f"https://karir.com/companies/{job['company_id']}",  # Assuming this is the correct URL format
-            'job_board': 'Karir.com',
-            'job_board_url': 'https://karir.com/',
-            'job_age': calculate_job_age(first_seen, last_seen),
-            'work_arrangement': 'N/A',  # Not provided in the response
+    def parse_job_details(self, response):
+        try:
+            job = response.meta['job']
+            job_detail = json.loads(response.text)['pageProps']['responseData']
 
-            # Optional fields
-            # 'is_urgent': str(job['is_urgent']),
-        }
+            first_seen = self.timestamp
+            last_seen = self.format_datetime(job['posted_at'])
+
+            yield {
+                'job_title': self.sanitize_string(job['job_position']),
+                'job_location': self.sanitize_string(job_detail['location']),
+                'job_department': ' - '.join(job_detail['job_functions']),
+                'job_url': f"https://karir.com/opportunities/{job['id']}",
+                'first_seen': first_seen,
+                'base_salary': self.get_salary_info(job_detail),
+                'job_type': job_detail['job_type'],
+                'job_level': ' - '.join(job_detail['job_levels']),
+                'job_apply_end_date': self.format_datetime(job_detail['expires_at']),
+                'last_seen': last_seen,
+                'is_active': str(not job_detail['is_expired']),
+                'company': self.sanitize_string(job_detail['company_name']),
+                'company_url': f"https://karir.com/companies/{job_detail['company']['id']}",
+                'job_board': 'Karir.com',
+                'job_board_url': 'https://karir.com/',
+                'job_age': calculate_job_age(first_seen, last_seen),
+                'work_arrangement': job_detail['workplace'],
+            }
+        except Exception as e:
+            logger.error(f"Error processing job details: {e}")
 
     @staticmethod
     def sanitize_string(s: Optional[str]) -> str:
+        # Clean up a string by removing unwanted characters
         if s is None:
             return 'N/A'
-        # Strip whitespace, replace commas with hyphens, and handle empty strings
         sanitized = s.strip().replace(',', ' -')
         return sanitized if sanitized else 'N/A'
 
     @staticmethod
     def format_datetime(date_string: str) -> str:
+        # Convert a date string to a standard format
         try:
             dt = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
             return dt.strftime("%Y-%m-%d %H:%M:%S")
@@ -153,6 +174,7 @@ class KarirSpiderJson(scrapy.Spider):
 
     @staticmethod
     def get_salary_info(job: Dict[str, Any]) -> str:
+        # Extract salary information from the job data
         if job['salary_lower'] and job['salary_upper']:
             return f"{job['salary_lower']} - {job['salary_upper']}"
         elif job['salary_info'] and job['salary_info'] != 'LABEL_COMPETITIVE_SALARY':
