@@ -6,9 +6,13 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from dotenv import load_dotenv
 
 import sys
 from pathlib import Path
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add the project root directory to the Python path
 project_root = Path(__file__).parent.parent
