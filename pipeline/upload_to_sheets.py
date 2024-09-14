@@ -3,13 +3,19 @@ import json
 import sys
 import time
 import random
+import re
+from datetime import datetime
 from dataclasses import dataclass
 from contextlib import contextmanager
+from dotenv import load_dotenv
 
 import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+# Load environment variables from .env file
+load_dotenv()
 
 @dataclass
 class Config:
@@ -18,7 +24,6 @@ class Config:
     max_retries: int
     sheet_id: int
 
-# Create the config object here, after the class definition
 config = Config(
     scopes=["https://www.googleapis.com/auth/spreadsheets"],
     sheet_range="",  # This will be set dynamically later
@@ -45,31 +50,17 @@ def setup_credentials():
 
 def read_csv(file_path):
     try:
-        # Specify dtype for job_type column to ensure it's always treated as string
-        df = pd.read_csv(file_path, dtype={'job_type': str})
-
-        # Define the desired column order
+        df = pd.read_csv(file_path, dtype={'job_type': str, 'job_level': str})
         desired_order = [
             'job_age', 'company', 'work_arrangement', 'job_title', 'job_type', 'job_department',
             'job_location', 'job_url', 'base_salary', 'job_level', 'first_seen',
             'last_seen', 'job_apply_end_date', 'is_active', 'job_board', 'company_url', 'job_board_url'
         ]
-
-        # Reorder columns, adding any missing columns as empty
         for col in desired_order:
             if col not in df.columns:
-                df[col] = ''  # Add empty column if it doesn't exist
+                df[col] = ''
         df = df[desired_order]
-
-        # Sanitize job_type column
-        df['job_type'] = df['job_type'].apply(sanitize_job_type)
-
-        # Sanitize work_arrangement column
-        df['work_arrangement'] = df['work_arrangement'].apply(sanitize_work_arrangement)
-
-        # Replace NaN values with empty strings
-        df = df.fillna('')
-        # Convert all values to strings and strip whitespace
+        df = df.fillna('Not specified')
         df = df.astype(str).apply(lambda x: x.str.strip())
         return [df.columns.tolist()] + df.values.tolist()
     except FileNotFoundError:
@@ -77,14 +68,218 @@ def read_csv(file_path):
         sys.exit(1)
 
 def validate_data(data):
-    if not data or len(data) < 2:  # Check for header and at least one data row
+    if not data or len(data) < 2:
         print("Error: CSV data is empty or has insufficient rows")
         return False
-    # Add more validation as needed
     return True
 
 def clean_data(data):
-    return [[str(cell).replace('\n', ' ').strip() for cell in row] for row in data]
+    header = data[0]
+    cleaned_data = [header]
+
+    for row in data[1:]:
+        cleaned_row = []
+        for i, cell in enumerate(row):
+            cell = str(cell).strip()
+
+            if cell in ('', 'N/A', 'nan'):
+                cell = 'Not specified'
+
+            if header[i] in ('first_seen', 'last_seen', 'job_apply_end_date'):
+                cell = standardize_date(cell)
+
+            if header[i] == 'job_title':
+                cell = clean_job_title(cell)
+
+            if header[i] == 'job_location':
+                cell = normalize_location(cell)
+
+            if header[i] == 'job_type':
+                cell = sanitize_job_type(cell)
+
+            if header[i] == 'work_arrangement':
+                cell = sanitize_work_arrangement(cell)
+
+            if header[i] == 'job_level':
+                cell = sanitize_job_level(cell)
+
+            if header[i] == 'job_department':
+                cell = sanitize_job_department(cell)
+
+            if header[i] == 'is_active':
+                cell = 'True' if cell.lower() == 'true' else 'False'
+
+            if header[i] == 'company':
+                cell = cell.strip()
+
+            if 'url' in header[i]:
+                cell = validate_url(cell)
+
+            cleaned_row.append(cell)
+
+        cleaned_data.append(cleaned_row)
+
+    return cleaned_data
+
+def standardize_date(date_str):
+    if date_str in ('Not specified', 'nan'):
+        return 'Not specified'
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+        return date_obj.strftime('%Y-%m-%d')
+    except ValueError:
+        return 'Invalid date'
+
+def clean_job_title(title):
+    title = re.sub(r'^(Jr\.|Senior|Sr\.) ', '', title)
+    title = re.sub(r' (I|II|III|IV|V)$', '', title)
+    return title.strip()
+
+def normalize_location(location):
+    return location.split(',')[0].strip()
+
+def validate_url(url):
+    if url.startswith(('http://', 'https://')):
+        return url
+    return 'Invalid URL'
+
+def sanitize_job_type(job_type):
+    if job_type in ('Not specified', 'nan'):
+        return 'Not specified'
+
+    job_type = str(job_type).lower()
+
+    contract_types = {'contract', 'contract & fulltime', 'contractual', 'kontrak', 'fixed term employment'}
+    freelance_types = {'freelance'}
+    part_time_types = {'part time', 'parttime', 'paruh waktu', 'part-time'}
+    full_time_types = {'full time', 'fulltime', 'fulltime & contract', 'fulltime & freelance', 'full-time'}
+    internship_types = {'intern', 'internship', 'magang'}
+    permanent_types = {'permanent', 'permanent employment'}
+    consultant_types = {'consultant'}
+    casual_types = {'kasual', 'casual'}
+    partnership_types = {'partnership'}
+
+    if any(t in job_type for t in contract_types):
+        return 'Contract'
+    elif any(t in job_type for t in freelance_types):
+        return 'Freelance'
+    elif any(t in job_type for t in part_time_types):
+        return 'Part time'
+    elif any(t in job_type for t in full_time_types):
+        return 'Full time'
+    elif any(t in job_type for t in internship_types):
+        return 'Internship'
+    elif any(t in job_type for t in permanent_types):
+        return 'Permanent'
+    elif any(t in job_type for t in consultant_types):
+        return 'Consultant'
+    elif any(t in job_type for t in casual_types):
+        return 'Casual'
+    elif any(t in job_type for t in partnership_types):
+        return 'Partnership'
+    else:
+        return job_type.capitalize()
+
+def sanitize_work_arrangement(arrangement):
+    if arrangement in ('Not specified', 'nan', 'False', 'Tidak Disebutkan'):
+        return 'Not specified'
+
+    arrangement = str(arrangement).lower()
+
+    remote_types = {'remote', 'jarak jauh', 'work from home', 'wfh'}
+    hybrid_types = {'hybrid', 'hibrid'}
+    onsite_types = {'onsite', 'on-site', 'kantor', 'office'}
+
+    types = []
+    if any(t in arrangement for t in remote_types):
+        types.append('Remote')
+    if any(t in arrangement for t in hybrid_types):
+        types.append('Hybrid')
+    if any(t in arrangement for t in onsite_types):
+        types.append('On-site')
+
+    if types:
+        return ' / '.join(types)
+    elif arrangement == 'full-time':
+        return 'On-site'
+    else:
+        return arrangement.capitalize()
+
+def sanitize_job_level(job_level):
+    if job_level in ('Not specified', 'nan', 'Tidak Disebutkan'):
+        return 'Not specified'
+
+    job_level = str(job_level).lower()
+
+    entry_level = {
+        'fresh graduate', 'intern', 'internship', 'undergraduate', 'entry level', 'junior',
+        'pemula / staf', 'pemula / staf - staf senior', 'pemula / staf - supervisor'
+    }
+    mid_level = {
+        'specialist', 'professional', 'lead', 'mid level', 'intermediate',
+        'staf senior', 'supervisor', 'asisten manajer',
+        'staf senior - supervisor', 'supervisor - asisten manajer',
+        'pemula / staf - staf senior - supervisor', 'pemula / staf - staf senior - asisten manajer',
+        'staf senior - supervisor - asisten manajer'
+    }
+    senior_level = {
+        'senior', 'senior officer', 'expert',
+        'asisten manajer senior', 'supervisor - asisten manajer - asisten manajer senior'
+    }
+    manager_level = {
+        'manager', 'supervisor', 'team lead',
+        'manajer - departemen', 'manajer - cabang/regional',
+        'asisten manajer - manajer - departemen',
+        'supervisor - manajer - departemen'
+    }
+    director_level = {
+        'director', 'head', 'head of department', 'vp', 'vice president',
+        'manajer senior', 'manajer - departemen - manajer senior',
+        'manajer - cabang/regional - manajer senior',
+        'asisten manajer senior - manajer senior'
+    }
+    executive_level = {
+        'c-level', 'executive', 'ceo', 'cto', 'cfo',
+        'kepala unit bisnis'
+    }
+
+    if any(level in job_level for level in entry_level):
+        return 'Entry Level'
+    elif any(level in job_level for level in mid_level):
+        return 'Mid Level'
+    elif any(level in job_level for level in senior_level):
+        return 'Senior Level'
+    elif any(level in job_level for level in manager_level):
+        return 'Manager'
+    elif any(level in job_level for level in director_level):
+        return 'Director'
+    elif any(level in job_level for level in executive_level):
+        return 'Executive'
+    else:
+        return job_level.capitalize()
+
+def sanitize_job_department(department):
+    department_mapping = {
+        '2000160518': 'Marketing',
+        '2000160519': 'Finance',
+        '2000160520': 'Operations',
+        '2000160726': 'Product',
+        '2000175832': 'Legal & Compliance',
+        '2000178745': 'Engineering',
+        '2000179058': 'People',
+        '2000179132': 'Fraud Management'
+    }
+
+    if department in ('Not specified', 'nan'):
+        return 'Not specified'
+
+    department = str(department).strip()
+
+    if department in department_mapping:
+        return department_mapping[department]
+
+    # If the department is not in the mapping, return it as is (capitalized)
+    return department.capitalize()
 
 @contextmanager
 def get_sheets_service(creds):
@@ -108,13 +303,11 @@ def upload_to_sheets(service, spreadsheet_id, data):
             spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
             print(f"Successfully accessed spreadsheet: {spreadsheet['properties']['title']}")
 
-            # Clear the sheet
             service.spreadsheets().values().clear(
                 spreadsheetId=spreadsheet_id,
                 range=config.sheet_range
             ).execute()
 
-            # Update values
             result = service.spreadsheets().values().update(
                 spreadsheetId=spreadsheet_id,
                 range=config.sheet_range,
@@ -123,7 +316,6 @@ def upload_to_sheets(service, spreadsheet_id, data):
             ).execute()
             print(f"{result.get('updatedCells')} cells updated.")
 
-            # Format header row as bold and freeze it
             requests = [
                 {
                     "repeatCell": {
@@ -155,7 +347,6 @@ def upload_to_sheets(service, spreadsheet_id, data):
                 }
             ]
 
-            # Execute the formatting requests
             service.spreadsheets().batchUpdate(
                 spreadsheetId=spreadsheet_id,
                 body={"requests": requests}
@@ -190,52 +381,6 @@ def main():
 
     with get_sheets_service(creds) as service:
         upload_to_sheets(service, spreadsheet_id, cleaned_content)
-
-def sanitize_job_type(job_type):
-    if pd.isna(job_type):
-        return ''  # or return a default value like 'Unknown'
-
-    # Convert to string if it's not already
-    job_type = str(job_type)
-
-    # Replace commas with ' & '
-    job_type = job_type.replace(',', ' & ')
-
-    # Define mappings
-    contract_types = {'contract', 'contract & fullTime', 'Contractual', 'Kontrak'}
-    freelance_types = {'freelance'}
-    part_time_types = {'Part time', 'partTime', 'Paruh waktu'}
-    full_time_types = {'Full Time', 'fullTime', 'fullTime & Contract', 'fullTime & freelance'}
-    internship_types = {'Intern', 'internship'}
-
-    # Check and replace values
-    job_type_lower = job_type.lower()
-
-    if any(t.lower() in job_type_lower for t in contract_types):
-        return 'Contract'
-    elif any(t.lower() in job_type_lower for t in freelance_types):
-        return 'Freelance'
-    elif any(t.lower() in job_type_lower for t in part_time_types):
-        return 'Part time'
-    elif any(t.lower() in job_type_lower for t in full_time_types):
-        return 'Full time'
-    elif any(t.lower() in job_type_lower for t in internship_types):
-        return 'Internship'
-    else:
-        return job_type  # Return as is if not matching any criteria
-
-def sanitize_work_arrangement(arrangement):
-    if pd.isna(arrangement):
-        return ''
-    arrangement = str(arrangement).lower()
-    if 'remote' in arrangement:
-        return 'Remote'
-    elif 'hybrid' in arrangement:
-        return 'Hybrid'
-    elif 'onsite' in arrangement or 'on-site' in arrangement:
-        return 'On-site'
-    else:
-        return arrangement.capitalize()
 
 if __name__ == "__main__":
     main()
