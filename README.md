@@ -8,11 +8,13 @@
 
 ## 🆕 Latest Updates
 
-- Implemented Playwright for improved JavaScript rendering and pagination handling
-- Enhanced Karir spider with better data extraction
-- Improved error handling and logging
-- Optimized pagination logic for better performance
-- Updated data processing pipeline for increased efficiency
+- Updated core dependencies to latest compatible versions
+- Upgraded Scrapy to version 2.11.1 for improved performance
+- Updated Playwright to version 1.42.0 for enhanced JavaScript rendering
+- Improved Google API client libraries for better integration
+- Enhanced data processing with pandas 2.2.1
+- Updated various supporting libraries for improved security and functionality
+- Maintained compatibility with existing Scrapy and Playwright implementations
 
 ## 📊 Overview
 

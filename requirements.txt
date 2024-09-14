@@ -1,59 +1,60 @@
 # Core dependencies for Google Sheets script
-pandas==2.2.2  # Updated from 2.1.3
-google-auth==2.23.4
-google-api-python-client==2.144.0  # Updated from 2.108.0
-google-auth-oauthlib==1.2.1  # Updated from 1.1.0
-google-auth-httplib2==0.2.0  # Updated from 0.1.1
+pandas==2.2.1
+google-auth==2.28.1
+google-api-python-client==2.122.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+python-dotenv==1.0.1
 
 # Scrapy and related packages
-Scrapy==2.11.2  # Updated from 2.11.0
-Twisted==22.10.0  # Keep this version to avoid breaking changes
-scrapy-playwright==0.0.33
-playwright==1.46.0  # Updated from 1.40.0
+Scrapy==2.11.1
+Twisted==22.10.0
+scrapy-playwright==0.0.34
+playwright==1.42.0
 
 # IPython for interactive development
-ipython==8.27.0  # Keep this version as previously updated
+ipython==8.22.2
 
 # Other dependencies
 asttokens==2.4.1
-attrs==23.1.0
-Automat==24.8.1  # Keep this version as previously updated
+attrs==23.2.0
+Automat==22.10.0
 backcall==0.2.0
-certifi==2023.11.17
-cffi==1.17.1  # Keep this version as previously updated
+certifi==2024.2.2
+cffi==1.16.0
 charset-normalizer==3.3.2
 constantly==23.10.4
-cryptography==41.0.5  # Keep this version to avoid breaking changes
+cryptography==42.0.5
 cssselect==1.2.0
 decorator==5.1.1
 executing==2.0.1
 filelock==3.13.1
-greenlet==3.0.3  # Keep this version as previously updated
+greenlet==3.0.3
 hyperlink==21.0.0
-idna==3.4
-incremental==24.7.2  # Keep this version as previously updated
+idna==3.6
+incremental==22.10.0
 itemadapter==0.8.0
 itemloaders==1.1.0
 jedi==0.19.1
 jmespath==1.0.1
-lxml==4.9.3
+lxml==5.1.0
 matplotlib-inline==0.1.6
-packaging==24.1  # Keep this version as previously updated
+packaging==23.2
 parsel==1.8.1
 parso==0.8.3
-pexpect==4.9.0  # Updated from 4.8.0
+pexpect==4.9.0
 pickleshare==0.7.5
-prompt-toolkit==3.0.41
-Protego==0.3.1  # Updated from 0.3.0
+prompt-toolkit==3.0.43
+Protego==0.3.0
 ptyprocess==0.7.0
 pure-eval==0.2.2
-pyasn1==0.5.0
-pyasn1-modules==0.4.0  # Updated from 0.3.0
+pyasn1==0.5.1
+pyasn1-modules==0.3.0
 pycparser==2.21
 PyDispatcher==2.0.7
-pyee==11.1.0  # Keep this version as previously updated
-Pygments==2.18.0  # Updated from 2.17.1
-pyOpenSSL==24.2.1  # Updated from 23.3.0
+pyee==11.0.1
+Pygments==2.17.2
+pyOpenSSL==24.0.0
 queuelib==1.6.2
 requests==2.31.0
 requests-file==1.5.1
@@ -61,9 +62,9 @@ service-identity==23.1.0
 six==1.16.0
 stack-data==0.6.3
 tldextract==5.1.1
-traitlets==5.13.0
-typing_extensions==4.12.2  # Keep this version as previously updated
-urllib3==2.1.0
-w3lib==2.2.1  # Keep this version as previously updated
-wcwidth==0.2.10
-zope.interface==6.1
+traitlets==5.14.1
+typing_extensions==4.9.0
+urllib3==2.2.1
+w3lib==2.1.2
+wcwidth==0.2.13
+zope.interface==6.2
