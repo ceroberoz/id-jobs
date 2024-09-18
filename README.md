@@ -8,11 +8,11 @@
 
 ## 🆕 Latest Updates
 
-- Implemented Playwright for improved JavaScript rendering and pagination handling
-- Enhanced Karir spider with better data extraction
-- Improved error handling and logging
-- Optimized pagination logic for better performance
-- Updated data processing pipeline for increased efficiency
+- Added Glints spider for comprehensive job data from Glints.com
+- Implemented pagination in Glints spider to capture all available job listings
+- Enhanced error handling and logging for improved debugging
+- Optimized data processing pipeline for Glints job information
+- Updated documentation to reflect new data source and features
 
 ## 📊 Overview
 
@@ -49,7 +49,7 @@ id-jobs simplifies job searching by gathering information from multiple sources 
 ## 📚 Data Sources
 
 We collect data from various job portals and company websites, including:
-Blibli, Dealls, Evermos, Flip, GoTo, Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, and more.
+Blibli, Dealls, Evermos, Flip, GoTo, Glints (Lite), Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, and more.
 
 ## 🚀 Features
 
