@@ -8,20 +8,17 @@
 
 ## 🆕 Latest Updates
 
-- Updated core dependencies to latest compatible versions
-- Upgraded Scrapy to version 2.11.1 for improved performance
-- Updated Playwright to version 1.42.0 for enhanced JavaScript rendering
-- Improved Google API client libraries for better integration
-- Enhanced data processing with pandas 2.2.1
-- Updated various supporting libraries for improved security and functionality
-- Maintained compatibility with existing Scrapy and Playwright implementations
+- Added Glints spider for comprehensive job data from Glints.com
+- Implemented pagination in Glints spider to capture all available job listings
+- Enhanced error handling and logging for improved debugging
+- Optimized data processing pipeline for Glints job information
+- Updated documentation to reflect new data source and features
 
 ## 📊 Overview
 
 id-jobs collects job listings from Indonesian job portals and company websites, respecting each site's terms of service.
 
 **View the Data on Google Sheets:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
-
 **View the Dasboard on LookerStudio by Google:** [https://s.id/id-jobs-dashboard](https://s.id/id-jobs-dashboard)
 
 ## 🎨 Job Age Colors
@@ -52,7 +49,7 @@ id-jobs simplifies job searching by gathering information from multiple sources 
 ## 📚 Data Sources
 
 We collect data from various job portals and company websites, including:
-Blibli, Dealls, Evermos, Flip, GoTo, Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, and more.
+Blibli, Dealls, Evermos, Flip, GoTo, Glints (Lite), Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, and more.
 
 ## 🚀 Features
 
