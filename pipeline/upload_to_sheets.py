@@ -294,6 +294,26 @@ def get_dynamic_range(data):
     num_cols = len(data[0]) if data else 0
     return f"Sheet1!A1:{chr(65 + num_cols - 1)}{num_rows}"
 
+def clear_sheet(service, spreadsheet_id):
+    sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    properties = sheet_metadata.get('sheets', [])[0].get('properties', {})
+    sheet_id = properties.get('sheetId', 0)
+
+    requests = [{
+        "updateCells": {
+            "range": {
+                "sheetId": sheet_id,
+            },
+            "fields": "userEnteredValue"
+        }
+    }]
+
+    body = {
+        'requests': requests
+    }
+    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+    print("Sheet cleared successfully.")
+
 def upload_to_sheets(service, spreadsheet_id, data):
     config.sheet_range = get_dynamic_range(data)
     body = {'values': data}
@@ -303,10 +323,8 @@ def upload_to_sheets(service, spreadsheet_id, data):
             spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
             print(f"Successfully accessed spreadsheet: {spreadsheet['properties']['title']}")
 
-            service.spreadsheets().values().clear(
-                spreadsheetId=spreadsheet_id,
-                range=config.sheet_range
-            ).execute()
+            # Clear the entire sheet
+            clear_sheet(service, spreadsheet_id)
 
             result = service.spreadsheets().values().update(
                 spreadsheetId=spreadsheet_id,
