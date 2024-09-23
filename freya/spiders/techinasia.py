@@ -3,25 +3,19 @@ import json
 from datetime import datetime
 import logging
 from typing import Dict, Any, Optional
-import random
-from freya.pipelines import calculate_job_age  # Import the function
+from urllib.parse import urlencode  # Add this import
+from freya.pipelines import calculate_job_age
 from freya.utils import calculate_job_apply_end_date
 
 logger = logging.getLogger(__name__)
 
-class BlibliSpiderJson(scrapy.Spider):
-    name = 'blibli'
-    BASE_URL = 'https://careers.blibli.com'
-    API_URL = f'{BASE_URL}/ext/api/job/list?format=COMPLETE&groupBy=true'
-    JOB_URL_TEMPLATE = f'{BASE_URL}/job-detail/{{}}?job={{}}'
+class TechInAsiaSpider(scrapy.Spider):
+    name = 'techinasia'
+    BASE_URL = 'https://219wx3mpv4-dsn.algolia.net/1/indexes/*/queries'
 
-    USER_AGENTS = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
-    ]
+    custom_settings = {
+        'DOWNLOAD_DELAY': 0.2,
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,29 +23,76 @@ class BlibliSpiderJson(scrapy.Spider):
 
     def start_requests(self):
         headers = {
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'cache-control': 'no-cache',
-            'dnt': '1',
-            'pragma': 'no-cache',
-            'priority': 'u=1, i',
-            'referer': 'https://careers.blibli.com/department/all-departments?experience=&employmentType=',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'sec-gpc': '1',
-            'user-agent': random.choice(self.USER_AGENTS)
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'content-type': 'application/x-www-form-urlencoded',
+            'Origin': 'https://www.techinasia.com',
+            'Connection': 'keep-alive',
+            'Referer': 'https://www.techinasia.com/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'cross-site',
+            'DNT': '1',
+            'Sec-GPC': '1',
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache',
         }
-        yield scrapy.Request(self.API_URL, headers=headers, callback=self.parse)
+
+        params = {
+            'x-algolia-agent': 'Algolia for vanilla JavaScript 3.30.0;JS Helper 2.26.1',
+            'x-algolia-application-id': '219WX3MPV4',
+            'x-algolia-api-key': 'b528008a75dc1c4402bfe0d8db8b3f8e',
+        }
+
+        payload = {
+            "requests": [
+                {
+                    "indexName": "job_postings",
+                    "params": "query=&hitsPerPage=20&maxValuesPerFacet=1000&page=0&facets=%5B%22*%22%2C%22city.work_country_name%22%2C%22position.name%22%2C%22industries.vertical_name%22%2C%22experience%22%2C%22job_type.name%22%2C%22is_salary_visible%22%2C%22has_equity%22%2C%22currency.currency_code%22%2C%22salary_min%22%2C%22taxonomies.slug%22%5D&tagFilters=&facetFilters=%5B%5B%22city.work_country_name%3AIndonesia%22%5D%5D"
+                },
+                {
+                    "indexName": "job_postings",
+                    "params": "query=&hitsPerPage=1&maxValuesPerFacet=1000&page=0&attributesToRetrieve=%5B%5D&attributesToHighlight=%5B%5D&attributesToSnippet=%5B%5D&tagFilters=&analytics=false&clickAnalytics=false&facets=city.work_country_name"
+                }
+            ]
+        }
+
+        yield scrapy.Request(
+            f"{self.BASE_URL}?{urlencode(params)}",
+            method='POST',
+            headers=headers,
+            body=json.dumps(payload),
+            callback=self.parse,
+            dont_filter=True
+        )
 
     def parse(self, response):
         try:
             data = json.loads(response.text)
-            departments = data['responseObject']
+            hits = data['results'][0]['hits']
+            total_pages = data['results'][0]['nbPages']
 
-            for department in departments:
-                for job in department['jobs']:
-                    yield self.parse_job(job)
+            for job in hits:
+                yield self.parse_job(job)
+
+            # Handle pagination
+            current_page = data['results'][0]['page']
+            if current_page < total_pages - 1:
+                payload = json.loads(response.request.body)
+                params_str = payload['requests'][0]['params']
+                new_params_str = params_str.replace(f"page={current_page}", f"page={current_page + 1}")
+                payload['requests'][0]['params'] = new_params_str
+
+                yield scrapy.Request(
+                    response.url,
+                    method='POST',
+                    headers=response.request.headers,
+                    body=json.dumps(payload),
+                    callback=self.parse,
+                    dont_filter=True
+                )
 
         except json.JSONDecodeError as e:
             logger.error(f"Error decoding JSON: {e}")
@@ -60,48 +101,37 @@ class BlibliSpiderJson(scrapy.Spider):
             logger.error(f"Unexpected error: {e}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
-        first_seen = datetime.strptime(self.timestamp, "%d/%m/%Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
-        last_seen = self.format_unix_time(job.get('createdDate'))
-        
+        first_seen = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        last_seen = self.sanitize_string(job.get('published_at', 'N/A'))
+
+        def format_salary(min_salary, max_salary, currency):
+            min_sal = self.sanitize_string(str(min_salary)) if min_salary is not None else 'N/A'
+            max_sal = self.sanitize_string(str(max_salary)) if max_salary is not None else 'N/A'
+            curr = self.sanitize_string(currency) if currency else 'N/A'
+            return f"{min_sal} - {max_sal} {curr}".replace(',', '')
+
         return {
             'job_title': self.sanitize_string(job.get('title')),
-            'job_location': self.sanitize_string(job.get('location')),
-            'job_department': self.sanitize_string(job.get('departmentName')),
-            'job_url': self.get_job_url(job),
-            'first_seen': first_seen,
-            'base_salary': 'N/A',
-            'job_type': self.get_employment_type(job),
-            'job_level': self.sanitize_string(job.get('experience')),
-            'job_apply_end_date': calculate_job_apply_end_date(last_seen),
+            'job_location': f"{self.sanitize_string(job.get('city', {}).get('name'))} - {self.sanitize_string(job.get('city', {}).get('work_country_name'))}",
+            'job_department': self.sanitize_string(job.get('position', {}).get('name')),
+            'job_url': self.sanitize_string(f"https://www.techinasia.com/jobs/{job.get('id')}"),
+            'first_seen': self.sanitize_string(first_seen),
+            'base_salary': format_salary(job.get('salary_min'), job.get('salary_max'), job.get('currency', {}).get('currency_code')),
+            'job_type': self.sanitize_string(job.get('job_type', {}).get('name')),
+            'job_level': f"{self.sanitize_string(str(job.get('experience_min', 'N/A')))} - {self.sanitize_string(str(job.get('experience_max', 'N/A')))} years",
+            'job_apply_end_date': self.sanitize_string(calculate_job_apply_end_date(last_seen)),
             'last_seen': last_seen,
             'is_active': 'True',
-            'company': 'Blibli',
-            'company_url': self.BASE_URL,
-            'job_board': 'Blibli Job Portal',
-            'job_board_url': 'https://careers.blibli.com',
-            'job_age': calculate_job_age(first_seen, last_seen),  # Ensure this line is present
-            'work_arrangement': '', # TODO: Check if this is the correct work arrangement
+            'company': self.sanitize_string(job.get('company', {}).get('name')),
+            'company_url': self.sanitize_string(f"https://www.techinasia.com/companies/{job.get('company', {}).get('entity_slug')}"),
+            'job_board': 'Tech in Asia Jobs',
+            'job_board_url': 'https://www.techinasia.com/jobs',
+            'job_age': self.sanitize_string(str(calculate_job_age(first_seen, last_seen))),
+            'work_arrangement': 'Remote' if job.get('is_remote') else 'On-site',
         }
-
-    def get_job_url(self, job: Dict[str, Any]) -> str:
-        job_title = job.get('title', '').lower().replace(' ', '-')
-        job_id = job.get('id', '')
-        return self.JOB_URL_TEMPLATE.format(job_title, job_id)
-
-    @staticmethod
-    def get_employment_type(job: Dict[str, Any]) -> str:
-        employment_type = job.get('employmentType', '')
-        return employment_type.replace("Ph-", "").replace("-", " ").capitalize() if employment_type else 'N/A'
 
     @staticmethod
     def sanitize_string(s: Optional[str]) -> str:
-        return s.strip() if s else 'N/A'
-
-    @staticmethod
-    def format_unix_time(unix_time: Optional[int]) -> str:
-        if unix_time is None:
+        if s is None:
             return 'N/A'
-        try:
-            return datetime.fromtimestamp(unix_time / 1000).strftime('%Y-%m-%d %H:%M:%S')
-        except (ValueError, TypeError):
-            return 'N/A'
+        return s.strip().replace(',', ' -').replace('\n', ' ').replace('\r', '')
