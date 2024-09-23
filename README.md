@@ -8,11 +8,11 @@
 
 ## 🆕 Latest Updates
 
-- Added Glints spider for comprehensive job data from Glints.com
-- Implemented pagination in Glints spider to capture all available job listings
-- Enhanced error handling and logging for improved debugging
-- Optimized data processing pipeline for Glints job information
-- Updated documentation to reflect new data source and features
+- Added TechInAsia spider to collect job data from Tech in Asia Jobs portal
+- Implemented Algolia API integration for efficient data retrieval from TechInAsia
+- Enhanced data sanitization to ensure CSV-friendly output
+- Improved error handling and logging for the new spider
+- Updated documentation to reflect the addition of TechInAsia as a data source
 
 ## 📊 Overview
 
@@ -20,7 +20,7 @@ id-jobs collects job listings from Indonesian job portals and company websites, 
 
 **View the Data on Google Sheets:** [https://s.id/id-jobs-v2](https://s.id/id-jobs-v2)
 
-**View the Dasboard on LookerStudio by Google:** [https://s.id/id-jobs-dashboard](https://s.id/id-jobs-dashboard)
+**View the Dashboard on LookerStudio by Google:** [https://s.id/id-jobs-dashboard](https://s.id/id-jobs-dashboard)
 
 ## 🎨 Job Age Colors
 
@@ -35,7 +35,7 @@ id-jobs collects job listings from Indonesian job portals and company websites, 
 
 ## 🔧 How It Works
 
-id-jobs automatically collects job data from various websites, cleans the information, and compiles it into a single spreadsheet. We now use Playwright for sites with complex JavaScript rendering.
+id-jobs automatically collects job data from various websites, cleans the information, and compiles it into a single spreadsheet. We use Scrapy for most sites and Playwright for sites with complex JavaScript rendering.
 
 ![Scraping Process](how-scraper-works.gif)
 
@@ -50,7 +50,7 @@ id-jobs simplifies job searching by gathering information from multiple sources 
 ## 📚 Data Sources
 
 We collect data from various job portals and company websites, including:
-Blibli, Dealls, Evermos, Flip, GoTo, Glints (Lite), Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, and more.
+Blibli, Dealls, Evermos, Flip, GoTo, Glints (Lite), Jobstreet, Kalibrr, Karir.com, Kredivo, Mekari, SoftwareOne, Tiket, Tech in Asia Jobs, and more.
 
 ## 🚀 Features
 
@@ -63,6 +63,7 @@ Blibli, Dealls, Evermos, Flip, GoTo, Glints (Lite), Jobstreet, Kalibrr, Karir.co
 - Job age tracking
 - JavaScript-rendered content handling with Playwright
 - Efficient pagination across multiple pages
+- Integration with Algolia API for improved data retrieval
 
 ## 🏁 Getting Started
 
