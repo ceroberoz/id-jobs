@@ -7,8 +7,8 @@ import time
 from typing import Dict, Any, List
 from scrapy.utils.project import get_project_settings
 import uuid
-from freya.pipelines import calculate_job_age  # Import the function
-from freya.utils import clean_string, format_date
+from freya.pipelines import calculate_job_age
+from freya.utils import clean_string
 
 def generate_random_id():
     return str(uuid.uuid4())
@@ -25,14 +25,14 @@ def format_date(date_string):
     except ValueError:
         return date_string
 
-class JobstreetSpider(scrapy.Spider):
-    name = 'jobstreet'
-    BASE_URL = 'https://id.jobstreet.com/api/chalice-search/v4/search'
-    MAX_PAGES = 1000
-    JOBS_PER_PAGE = 30
+class SeekAUSpider(scrapy.Spider):
+    name = 'seek-au'
+    BASE_URL = 'https://www.seek.com.au/api/chalice-search/v4/search'
+    MAX_PAGES = 30  # Updated based on totalPages from the response
+    JOBS_PER_PAGE = 22  # Updated based on the actual number of jobs per page in the response
 
     def __init__(self, *args, **kwargs):
-        super(JobstreetSpider, self).__init__(*args, **kwargs)
+        super(SeekAUSpider, self).__init__(*args, **kwargs)
         self.settings = get_project_settings()
         self.user_agents = self.settings.get('USER_AGENTS', [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -61,18 +61,20 @@ class JobstreetSpider(scrapy.Spider):
     def get_request_params(self, page: int) -> Dict[str, str]:
         user_id = generate_random_id()
         return {
-            'siteKey': 'ID-Main',
+            'siteKey': 'AU-Main',
             'sourcesystem': 'houston',
             'userqueryid': generate_random_query_id(),
             'userid': user_id,
             'usersessionid': user_id,
             'eventCaptureSessionId': user_id,
+            'where': 'All Australia',
             'page': str(page),
             'seekSelectAllPages': 'true',
+            'keywords': 'relocation package',
             'sortmode': 'ListedDate',
             'pageSize': str(self.JOBS_PER_PAGE),
             'include': 'seodata',
-            'locale': 'id-ID',
+            'locale': 'en-AU',
             'solId': generate_random_id()
         }
 
@@ -84,16 +86,15 @@ class JobstreetSpider(scrapy.Spider):
             'dnt': '1',
             'pragma': 'no-cache',
             'priority': 'u=1, i',
-            'referer': 'https://id.jobstreet.com/id/jobs?sortmode=ListedDate',
+            'referer': 'https://www.seek.com.au/relocation-package-jobs',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
             'sec-gpc': '1',
-            'seek-request-brand': 'jobstreet',
-            'seek-request-country': 'ID',
+            'seek-request-brand': 'seek',
+            'seek-request-country': 'AU',
             'user-agent': random.choice(self.user_agents),
-            'x-forwarded-for': f'1.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(0, 255)}',
-            'x-seek-checksum': '129cf744',
+            'x-seek-checksum': '12ac3654',
             'x-seek-site': 'Chalice'
         }
 
@@ -118,26 +119,17 @@ class JobstreetSpider(scrapy.Spider):
             self.logger.error(f"Unexpected error on page {response.meta['page']}: {e}")
 
     def parse_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Parse a job listing and return a structured dictionary.
-
-        Args:
-            job (Dict[str, Any]): Raw job data from the API.
-
-        Returns:
-            Dict[str, Any]: Structured job data.
-        """
         now = datetime.now(timezone.utc)
         first_seen = now.strftime("%Y-%m-%d %H:%M:%S")
-        
+
         try:
             job_id = str(job.get('id', ''))
-            company_name = clean_string(job.get('companyName', ''))
+            company_name = clean_string(job.get('companyName', '')).replace(',', ' ')
             company_name = company_name if company_name else "Private Advertiser"
             listing_date = job.get('listingDate', '')
             last_seen = format_date(listing_date)
             advertiser_id = job.get('advertiser', {}).get('id', '')
-            
+
             # Calculate job_apply_end_date (listing_date + 30 days)
             if listing_date:
                 listing_datetime = datetime.strptime(listing_date, "%Y-%m-%dT%H:%M:%SZ")
@@ -145,48 +137,50 @@ class JobstreetSpider(scrapy.Spider):
                 job_apply_end_date = apply_end_date.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 job_apply_end_date = ''
-            
+
+            def sanitize(value):
+                return clean_string(str(value)).replace(',', ' ')
+
             return {
-                'job_title': clean_string(job.get('title', '')),
-                'job_location': clean_string(job.get('jobLocation', {}).get('label', '')),
-                'job_department': clean_string(f"{job.get('classification', {}).get('description', '')}-{job.get('subClassification', {}).get('description', '')}"),
-                'job_url': f"https://id.jobstreet.com/job/{job_id}",
+                'job_title': sanitize(job.get('title', '')),
+                'job_location': sanitize(job.get('jobLocation', {}).get('label', '')),
+                'job_department': sanitize(f"{job.get('classification', {}).get('description', '')}-{job.get('subClassification', {}).get('description', '')}"),
+                'job_url': sanitize(f"https://www.seek.com.au/job/{job_id}"),
                 'first_seen': first_seen,
-                'base_salary': clean_string(job.get('salary', 'N/A')),
-                'job_type': clean_string(job.get('workType', 'N/A')),
-                'job_level': '', # TODO: Check if this is the correct job level
+                'base_salary': sanitize(job.get('salary', 'N/A')),
+                'job_type': sanitize(job.get('workType', 'N/A')),
+                'job_level': sanitize(self.extract_job_level(job)),
                 'job_apply_end_date': job_apply_end_date,
                 'last_seen': last_seen,
                 'is_active': 'True',
                 'company': company_name,
-                'company_url': f"https://id.jobstreet.com/companies/{company_name.lower().replace(' ', '-')}-{advertiser_id}" if advertiser_id else '', # TODO: Check if this is the correct company URL
-                'job_board': 'Jobstreet',
-                'job_board_url': 'https://id.jobstreet.com/',
-                'job_age': calculate_job_age(first_seen, last_seen),
-
-                # TODO: Add job description, work arrangement, is_premium, advertiser_id, and display_type
-                # 'job_description': clean_string(job.get('teaser', '')),
-                'work_arrangement': self.extract_work_arrangement(job),
-                # 'is_premium': str(job.get('isPremium', False)),
-                # 'advertiser_id': advertiser_id,
-                # 'display_type': job.get('displayType', ''),
+                'company_url': sanitize(self.extract_company_url(job)),
+                'job_board': 'Seek',
+                'job_board_url': 'https://www.seek.com.au/',
+                'job_age': sanitize(calculate_job_age(first_seen, last_seen)),
+                # 'job_description': sanitize(job.get('teaser', '')),
+                'work_arrangement': sanitize(self.extract_work_arrangement(job)),
+                'is_premium': str(job.get('isPremium', False)),
+                'advertiser_id': sanitize(advertiser_id),
+                'display_type': sanitize(job.get('displayType', '')),
+                'area': sanitize(job.get('area', '')),
+                'suburb': sanitize(job.get('suburb', '')),
+                # 'bullet_points': '; '.join([sanitize(bp) for bp in job.get('bulletPoints', [])]),
+                'listing_date_display': sanitize(job.get('listingDateDisplay', '')),
             }
         except Exception as e:
             self.logger.error(f"Error parsing job {job_id} from {company_name}: {str(e)}")
             return {}  # Return an empty dict if parsing fails
 
     def extract_job_level(self, job: Dict[str, Any]) -> str:
-        """Extract job level from classification if available."""
         classification = job.get('classification', {}).get('description', '')
         subclassification = job.get('subClassification', {}).get('description', '')
         return f"{classification} - {subclassification}" if classification or subclassification else 'N/A'
 
     def extract_company_url(self, job: Dict[str, Any]) -> str:
-        """Extract company URL from branding if available."""
         return job.get('branding', {}).get('assets', {}).get('logo', {}).get('strategies', {}).get('serpLogo', '')
 
     def extract_work_arrangement(self, job: Dict[str, Any]) -> str:
-        """Extract work arrangement if available."""
         arrangements = job.get('workArrangements', {}).get('data', [])
         return ', '.join([arr.get('label', {}).get('text', '') for arr in arrangements]) if arrangements else 'N/A'
 
