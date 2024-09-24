@@ -40,15 +40,27 @@ initialize_merged_file
 # Array of spiders to skip (manually filled)
 # All of these spiders are listed on the google sheet
 # blibli
-# dealls
+# dealls *
 # evermos
-# goto #TODO: Add back goto
-# jobstreet
-# kalibrr
+# flip
+# glints *
+# goto *
+# jobstreet *
+# kalibrr *
+# karir *
+# koltiva
+# kredivo
+# mekari *
 # softwareone
+# techinasia *
 # tiket
 # vidio
+
+# Prod usage
 skip_spiders=("goto")
+
+# Dev usage only
+# skip_spiders=("dealls" "glints" "goto" "jobstreet" "kalibrr" "karir" "mekari" "techinasia")
 
 # Process spider files
 found_files=false
