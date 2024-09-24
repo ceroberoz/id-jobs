@@ -1,4 +1,5 @@
 import scrapy
+import html
 import json
 from datetime import datetime, timezone, timedelta
 import random
@@ -28,8 +29,6 @@ def format_date(date_string):
 class SeekAUSpider(scrapy.Spider):
     name = 'seek-au'
     BASE_URL = 'https://www.seek.com.au/api/chalice-search/v4/search'
-    MAX_PAGES = 30  # Updated based on totalPages from the response
-    JOBS_PER_PAGE = 22  # Updated based on the actual number of jobs per page in the response
 
     def __init__(self, *args, **kwargs):
         super(SeekAUSpider, self).__init__(*args, **kwargs)
@@ -41,12 +40,14 @@ class SeekAUSpider(scrapy.Spider):
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
         ])
+        self.MAX_PAGES = None  # Will be set dynamically in parse method
+        self.JOBS_PER_PAGE = None  # Will be set dynamically in parse method
 
     def start_requests(self):
         concurrent_requests = self.settings.getint('CONCURRENT_REQUESTS', 16)
         download_delay = self.settings.getfloat('DOWNLOAD_DELAY', 0.25)
 
-        for page in range(1, self.MAX_PAGES + 1):
+        for page in range(1, 2):  # Start with just the first page
             params = self.get_request_params(page)
             headers = self.get_headers()
 
@@ -72,7 +73,7 @@ class SeekAUSpider(scrapy.Spider):
             'seekSelectAllPages': 'true',
             'keywords': 'relocation package',
             'sortmode': 'ListedDate',
-            'pageSize': str(self.JOBS_PER_PAGE),
+            'pageSize': '100',
             'include': 'seodata',
             'locale': 'en-AU',
             'solId': generate_random_id()
@@ -101,6 +102,11 @@ class SeekAUSpider(scrapy.Spider):
     def parse(self, response):
         try:
             data = json.loads(response.text)
+
+            # Set MAX_PAGES and JOBS_PER_PAGE dynamically
+            self.MAX_PAGES = data.get('totalPages', 30)  # Default to 30 if not found
+            self.JOBS_PER_PAGE = len(data.get('data', []))
+
             jobs = data.get('data', [])
 
             if not jobs:
@@ -113,6 +119,19 @@ class SeekAUSpider(scrapy.Spider):
             # Add a random delay between requests
             time.sleep(response.meta['download_delay'] + random.uniform(0.5, 1.5))
 
+            # If this was the first page, now request all remaining pages
+            if response.meta['page'] == 1:
+                for page in range(2, self.MAX_PAGES + 1):
+                    params = self.get_request_params(page)
+                    headers = self.get_headers()
+                    yield scrapy.Request(
+                        url=f"{self.BASE_URL}?{urllib.parse.urlencode(params)}",
+                        headers=headers,
+                        callback=self.parse,
+                        meta={'page': page, 'download_delay': response.meta['download_delay']},
+                        errback=self.errback_httpbin
+                    )
+
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding JSON on page {response.meta['page']}: {e}")
         except Exception as e:
@@ -122,24 +141,30 @@ class SeekAUSpider(scrapy.Spider):
         now = datetime.now(timezone.utc)
         first_seen = now.strftime("%Y-%m-%d %H:%M:%S")
 
+        def sanitize(value):
+            if value is None:
+                return ''
+            # Decode HTML entities
+            decoded = html.unescape(str(value))
+            # Replace commas, newlines, and other potential problematic characters
+            cleaned = decoded.replace(',', ' ').replace('\n', ' ').replace('\r', ' ').replace('"', "'")
+            # Remove any extra spaces
+            return ' '.join(cleaned.split()).strip()
+
         try:
             job_id = str(job.get('id', ''))
-            company_name = clean_string(job.get('companyName', '')).replace(',', ' ')
+            company_name = sanitize(job.get('companyName', ''))
             company_name = company_name if company_name else "Private Advertiser"
             listing_date = job.get('listingDate', '')
             last_seen = format_date(listing_date)
             advertiser_id = job.get('advertiser', {}).get('id', '')
 
-            # Calculate job_apply_end_date (listing_date + 30 days)
             if listing_date:
                 listing_datetime = datetime.strptime(listing_date, "%Y-%m-%dT%H:%M:%SZ")
                 apply_end_date = listing_datetime + timedelta(days=30)
                 job_apply_end_date = apply_end_date.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 job_apply_end_date = ''
-
-            def sanitize(value):
-                return clean_string(str(value)).replace(',', ' ')
 
             return {
                 'job_title': sanitize(job.get('title', '')),
@@ -158,19 +183,18 @@ class SeekAUSpider(scrapy.Spider):
                 'job_board': 'Seek',
                 'job_board_url': 'https://www.seek.com.au/',
                 'job_age': sanitize(calculate_job_age(first_seen, last_seen)),
-                # 'job_description': sanitize(job.get('teaser', '')),
                 'work_arrangement': sanitize(self.extract_work_arrangement(job)),
                 'is_premium': str(job.get('isPremium', False)),
                 'advertiser_id': sanitize(advertiser_id),
                 'display_type': sanitize(job.get('displayType', '')),
                 'area': sanitize(job.get('area', '')),
                 'suburb': sanitize(job.get('suburb', '')),
-                # 'bullet_points': '; '.join([sanitize(bp) for bp in job.get('bulletPoints', [])]),
                 'listing_date_display': sanitize(job.get('listingDateDisplay', '')),
             }
         except Exception as e:
             self.logger.error(f"Error parsing job {job_id} from {company_name}: {str(e)}")
             return {}  # Return an empty dict if parsing fails
+
 
     def extract_job_level(self, job: Dict[str, Any]) -> str:
         classification = job.get('classification', {}).get('description', '')
