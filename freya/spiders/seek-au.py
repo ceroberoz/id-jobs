@@ -30,6 +30,11 @@ class SeekAUSpider(scrapy.Spider):
     name = 'seek-au'
     BASE_URL = 'https://www.seek.com.au/api/chalice-search/v4/search'
 
+    custom_settings = {
+        'CONCURRENT_REQUESTS': 16,
+        'DOWNLOAD_DELAY': 0.25,
+    }
+
     def __init__(self, *args, **kwargs):
         super(SeekAUSpider, self).__init__(*args, **kwargs)
         self.settings = get_project_settings()
@@ -40,26 +45,30 @@ class SeekAUSpider(scrapy.Spider):
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0',
         ])
-        self.MAX_PAGES = None  # Will be set dynamically in parse method
-        self.JOBS_PER_PAGE = None  # Will be set dynamically in parse method
+        self.keywords = ["relocation package", "remote"]
+        self.current_keyword_index = 0
+        self.MAX_PAGES = None
 
     def start_requests(self):
-        concurrent_requests = self.settings.getint('CONCURRENT_REQUESTS', 16)
-        download_delay = self.settings.getfloat('DOWNLOAD_DELAY', 0.25)
+        return self.start_keyword_crawl()
 
-        for page in range(1, 2):  # Start with just the first page
-            params = self.get_request_params(page)
-            headers = self.get_headers()
-
+    def start_keyword_crawl(self):
+        if self.current_keyword_index < len(self.keywords):
+            keyword = self.keywords[self.current_keyword_index]
+            self.logger.info(f"Starting crawl for keyword: {keyword}")
+            params = self.get_request_params(1, keyword)
+            headers = self.get_headers(keyword)
             yield scrapy.Request(
                 url=f"{self.BASE_URL}?{urllib.parse.urlencode(params)}",
                 headers=headers,
                 callback=self.parse,
-                meta={'page': page, 'download_delay': download_delay},
+                meta={'page': 1, 'keyword': keyword},
                 errback=self.errback_httpbin
             )
+        else:
+            self.logger.info("All keywords have been crawled.")
 
-    def get_request_params(self, page: int) -> Dict[str, str]:
+    def get_request_params(self, page: int, keyword: str) -> Dict[str, str]:
         user_id = generate_random_id()
         return {
             'siteKey': 'AU-Main',
@@ -71,7 +80,7 @@ class SeekAUSpider(scrapy.Spider):
             'where': 'All Australia',
             'page': str(page),
             'seekSelectAllPages': 'true',
-            'keywords': 'relocation package',
+            'keywords': keyword,
             'sortmode': 'ListedDate',
             'pageSize': '100',
             'include': 'seodata',
@@ -79,7 +88,7 @@ class SeekAUSpider(scrapy.Spider):
             'solId': generate_random_id()
         }
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self, keyword: str) -> Dict[str, str]:
         return {
             'accept': 'application/json, text/plain, */*',
             'accept-language': 'en-US,en;q=0.9',
@@ -87,7 +96,7 @@ class SeekAUSpider(scrapy.Spider):
             'dnt': '1',
             'pragma': 'no-cache',
             'priority': 'u=1, i',
-            'referer': 'https://www.seek.com.au/relocation-package-jobs',
+            'referer': f'https://www.seek.com.au/{urllib.parse.quote(keyword)}-jobs',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
@@ -102,35 +111,33 @@ class SeekAUSpider(scrapy.Spider):
     def parse(self, response):
         try:
             data = json.loads(response.text)
-
-            # Set MAX_PAGES and JOBS_PER_PAGE dynamically
-            self.MAX_PAGES = data.get('totalPages', 30)  # Default to 30 if not found
-            self.JOBS_PER_PAGE = len(data.get('data', []))
-
+            self.MAX_PAGES = data.get('totalPages', 30)
             jobs = data.get('data', [])
 
             if not jobs:
-                self.logger.info(f"No more jobs found on page {response.meta['page']}. Stopping crawl.")
+                self.logger.info(f"No more jobs found for keyword '{response.meta['keyword']}' on page {response.meta['page']}.")
+                self.current_keyword_index += 1
+                yield from self.start_keyword_crawl()
                 return
 
             for job in jobs:
                 yield self.parse_job(job)
 
-            # Add a random delay between requests
-            time.sleep(response.meta['download_delay'] + random.uniform(0.5, 1.5))
-
-            # If this was the first page, now request all remaining pages
-            if response.meta['page'] == 1:
-                for page in range(2, self.MAX_PAGES + 1):
-                    params = self.get_request_params(page)
-                    headers = self.get_headers()
-                    yield scrapy.Request(
-                        url=f"{self.BASE_URL}?{urllib.parse.urlencode(params)}",
-                        headers=headers,
-                        callback=self.parse,
-                        meta={'page': page, 'download_delay': response.meta['download_delay']},
-                        errback=self.errback_httpbin
-                    )
+            next_page = response.meta['page'] + 1
+            if next_page <= self.MAX_PAGES:
+                params = self.get_request_params(next_page, response.meta['keyword'])
+                headers = self.get_headers(response.meta['keyword'])
+                yield scrapy.Request(
+                    url=f"{self.BASE_URL}?{urllib.parse.urlencode(params)}",
+                    headers=headers,
+                    callback=self.parse,
+                    meta={'page': next_page, 'keyword': response.meta['keyword']},
+                    errback=self.errback_httpbin
+                )
+            else:
+                self.logger.info(f"Finished crawling for keyword '{response.meta['keyword']}'")
+                self.current_keyword_index += 1
+                yield from self.start_keyword_crawl()
 
         except json.JSONDecodeError as e:
             self.logger.error(f"Error decoding JSON on page {response.meta['page']}: {e}")
@@ -144,16 +151,13 @@ class SeekAUSpider(scrapy.Spider):
         def sanitize(value):
             if value is None:
                 return ''
-            # Decode HTML entities
             decoded = html.unescape(str(value))
-            # Replace commas, newlines, and other potential problematic characters
             cleaned = decoded.replace(',', ' ').replace('\n', ' ').replace('\r', ' ').replace('"', "'")
-            # Remove any extra spaces
             return ' '.join(cleaned.split()).strip()
 
         try:
-            job_id = str(job.get('id', ''))
-            company_name = sanitize(job.get('companyName', ''))
+            job_id = str(job.get('id', 'Unknown'))
+            company_name = sanitize(job.get('companyName', 'Unknown'))
             company_name = company_name if company_name else "Private Advertiser"
             listing_date = job.get('listingDate', '')
             last_seen = format_date(listing_date)
@@ -193,8 +197,7 @@ class SeekAUSpider(scrapy.Spider):
             }
         except Exception as e:
             self.logger.error(f"Error parsing job {job_id} from {company_name}: {str(e)}")
-            return {}  # Return an empty dict if parsing fails
-
+            return {}
 
     def extract_job_level(self, job: Dict[str, Any]) -> str:
         classification = job.get('classification', {}).get('description', '')
