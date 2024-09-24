@@ -1,4 +1,4 @@
-name: Daily update to Google Sheets
+name: Daily Job Data Update
 
 on:
   push:
@@ -9,86 +9,70 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  daily-update:
+  update-job-data:
     runs-on: ubuntu-latest
 
     steps:
-      # Summon our code from the depths of GitHub!
-      - uses: actions/checkout@v4
+      # Get our code from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Create a new development branch for PRs
-      - name: Create development branch for PRs
-        if: github.event_name == 'pull_request'
-        run: |
-          git checkout -b development-${{ github.event.pull_request.number }}
-          git push -u origin development-${{ github.event.pull_request.number }}
-
-      # Prepare the ultimate Python environment for our Explosion magic!
+      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
 
-      # Verify our Python version, for only the mightiest can cast Explosion!
-      - name: Verify Python version
+      # Check Python version
+      - name: Check Python version
         run: python --version
 
-      # Gather the ingredients for our Explosion spell!
-      - name: Install dependencies
+      # Install required packages
+      - name: Install packages
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Summon our trusty Playwright familiars!
-      - name: Install Playwright browsers
+      # Install Playwright browsers
+      - name: Install Playwright
         run: playwright install --with-deps chromium firefox webkit
 
-      # Ensure our secret incantations are in place!
-      - name: Verify environment variables
+      # Check if we have the needed secret info
+      - name: Check secret info
         run: |
-          if [ -z "${{ secrets.GCP_JSON }}" ]; then echo "GCP_JSON is not set! Our Explosion will fizzle!"; exit 1; fi
-          if [ -z "${{ secrets.GOOGLE_SHEETS_ID }}" ]; then echo "GOOGLE_SHEETS_ID is not set! We have no target for our Explosion!"; exit 1; fi
+          if [ -z "${{ secrets.GCP_JSON }}" ]; then echo "Missing GCP_JSON"; exit 1; fi
+          if [ -z "${{ secrets.GOOGLE_SHEETS_ID }}" ]; then echo "Missing GOOGLE_SHEETS_ID"; exit 1; fi
 
-      # Unleash our web-crawling Explosion upon the job sites!
+      # Run our web scraping script
       - name: Run scraping
         env:
           PYTHONUNBUFFERED: 1
         run: |
-          chmod +x ./pipeline/scrape.sh
-          ./pipeline/scrape.sh
+          chmod +x ./pipeline/1_scrape.sh
+          ./pipeline/1_scrape.sh
 
-      # Channel our scraped data into Google Sheets with explosive force!
+      # Upload data to Google Sheets
       - name: Upload to Google Sheets
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
           PYTHONUNBUFFERED: 1
-        run: PYTHONPATH="${PYTHONPATH:-$(pwd)}" python -m pipeline.upload_to_sheets
+        run: PYTHONPATH="${PYTHONPATH:-$(pwd)}" python -m pipeline.2_upload_to_sheets
 
-      # Fine-tune our spell for maximum visual impact!
-      - name: Adjust Column Widths, Apply and Filter View Formatting
+      # Format the Google Sheet
+      - name: Format Google Sheet
         env:
           GCP_JSON: ${{ secrets.GCP_JSON }}
           GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
           PYTHONUNBUFFERED: 1
-        run: PYTHONPATH="${PYTHONPATH:-$(pwd)}" python -m pipeline.sheet_updater
+        run: PYTHONPATH="${PYTHONPATH:-$(pwd)}" python -m pipeline.3_sheet_updater
 
-      # Vanish without a trace, like a true Crimson Demon after casting Explosion!
-      - name: Cleanup
+      # Clean up temporary files
+      - name: Clean up
         if: always()
         run: rm -rf output
 
-      # Proclaim our success to the world!
-      - name: Declare victory
-        run: echo "Explosion magic successfully cast! The job data has been gloriously updated!"
-
-      # Commit changes to the development branch
-      - name: Commit changes
-        if: github.event_name == 'pull_request'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git commit -m "💥 Explosive update from PR #${{ github.event.pull_request.number }}" || echo "No changes to commit"
-          git push origin development-${{ github.event.pull_request.number }}
+      # Print success message
+      - name: Success message
+        run: echo "Job data update complete!"
