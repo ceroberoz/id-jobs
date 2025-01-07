@@ -10,7 +10,7 @@ on:
 
 jobs:
   update-job-data:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       # Get our code from GitHub
@@ -34,19 +34,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Install system dependencies
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libasound2 \
-            libicu67 \
-            libffi-dev \
-            libx264-155
-
       # Install Playwright browsers
       - name: Install Playwright
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: playwright install --with-deps chromium firefox webkit
 
       # Check if we have the needed secret info
       - name: Check secret info
