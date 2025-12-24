@@ -15,8 +15,13 @@ jobs:
       contents: write
 
     steps:
+      # Get our code from GitHub
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # This tells Git to use your token for authentication
+          token: ${{ secrets.PAT }}
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
